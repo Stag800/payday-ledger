@@ -1,0 +1,2387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Payday Ledger</title>
+<meta name="description" content="Paycheck planning and a daily balance calendar for every bill and budget.">
+<meta name="theme-color" content="#E9EEE8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1411" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: light; -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+/* Layout: app shell. Left rail on wide screens, bottom tab bar on phones; panels ruled like a check register. */
+:root {
+  --bg: #E9EEE8; --paper: #F8FAF6; --raise: #FFFFFF; --line: #CBD6CC; --line-soft: #DFE7DE;
+  --ink: #15231C; --muted: #56675D; --faint: #869489;
+  --accent: #2343B0; --accent-ink: #FFFFFF; --accent-soft: #DCE3F8;
+  --in: #1B7443; --in-soft: #D8EEDF; --out: #AF2F27; --out-soft: #F5DDD9; --warn: #93600F; --warn-soft: #F4E6CB;
+  --scrim: rgba(13, 22, 17, .42);
+  --shadow: 0 1px 0 rgba(21, 35, 28, .05), 0 10px 28px -14px rgba(21, 35, 28, .28);
+  --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --num: 'IBM Plex Sans Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --r: 12px; --rs: 8px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --t-xs: .75rem; --t-sm: .8125rem; --t-md: .9375rem; --t-lg: 1.125rem; --t-xl: 1.5rem; --t-2xl: 2.25rem;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D1411; --paper: #141D18; --raise: #1A251F; --line: #2C3B33; --line-soft: #202D26;
+  --ink: #E2EBE4; --muted: #9AACA0; --faint: #6E8075;
+  --accent: #8FA8FF; --accent-ink: #0D1411; --accent-soft: #1E2950;
+  --in: #62CC90; --in-soft: #16301F; --out: #FF8D80; --out-soft: #3A1B18; --warn: #E8B45C; --warn-soft: #362A13;
+  --scrim: rgba(0, 0, 0, .6);
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 30px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0D1411; --paper: #141D18; --raise: #1A251F; --line: #2C3B33; --line-soft: #202D26;
+  --ink: #E2EBE4; --muted: #9AACA0; --faint: #6E8075;
+  --accent: #8FA8FF; --accent-ink: #0D1411; --accent-soft: #1E2950;
+  --in: #62CC90; --in-soft: #16301F; --out: #FF8D80; --out-soft: #3A1B18; --warn: #E8B45C; --warn-soft: #362A13;
+  --scrim: rgba(0, 0, 0, .6);
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 30px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: var(--t-md); line-height: 1.45; -webkit-font-smoothing: antialiased; }
+body.noscroll { overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+.eyebrow { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.in { color: var(--in); } .out { color: var(--out); } .warn { color: var(--warn); }
+
+/* ---------- shell ---------- */
+.shell { min-height: 100%; display: grid; grid-template-columns: 1fr; }
+.rail { display: none; }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.top-in { display: flex; align-items: center; gap: var(--s3); padding-block: var(--s3); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.brand { display: flex; align-items: center; gap: var(--s2); font-family: var(--display); font-weight: 800; font-size: var(--t-lg); letter-spacing: -.02em; }
+.brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.brand-mark svg { width: 16px; height: 16px; }
+.chip-sync { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-xs); color: var(--muted); padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); white-space: nowrap; }
+.chip-sync .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.chip-sync.ok .dot { background: var(--in); } .chip-sync.busy .dot { background: var(--warn); } .chip-sync.local .dot { background: var(--warn); }
+main { padding-block: var(--s4) calc(88px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1120px; width: 100%; box-sizing: border-box; margin: 0 auto; min-width: 0; }
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--paper); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.tab { background: none; border: 0; padding: 8px 2px 9px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); font-weight: 500; }
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-current="page"] { color: var(--accent); }
+.tab[aria-current="page"] svg { stroke-width: 2.2; }
+.ico { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (min-width: 880px) {
+  .shell { grid-template-columns: 220px 1fr; }
+  .rail { display: flex; flex-direction: column; gap: var(--s1); position: sticky; top: 0; height: 100vh; box-sizing: border-box; padding: var(--s5) var(--s3); padding-left: max(12px, env(safe-area-inset-left, 0px)); border-right: 1px solid var(--line); background: var(--paper); }
+  .rail .brand { padding: 0 var(--s2) var(--s5); }
+  .rail .tab { flex-direction: row; justify-content: flex-start; gap: var(--s3); font-size: var(--t-md); padding: 10px 12px; border-radius: 10px; color: var(--ink); }
+  .rail .tab svg { width: 20px; height: 20px; color: var(--muted); }
+  .rail .tab[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+  .rail .tab[aria-current="page"] svg { color: var(--accent); }
+  .rail .chip-sync { margin: auto 0 0; align-self: flex-start; }
+  .tabbar { display: none; }
+  .top { display: none; }
+  main { padding-block: var(--s6) var(--s6); }
+}
+
+/* ---------- common ---------- */
+.page-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--s2) var(--s3); margin-bottom: var(--s4); }
+.page-head h1 { font-size: var(--t-xl); font-weight: 800; }
+.page-head .sub { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: var(--t-sm); max-width: 62ch; }
+.page-head .acts { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 520px) { .page-head { grid-template-columns: minmax(0, 1fr); } .page-head .acts { justify-content: flex-start; } }
+.p-why { margin: -4px 0 0; font-size: var(--t-xs); color: var(--muted); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--raise); padding: 8px 14px; font-weight: 600; font-size: var(--t-sm); white-space: nowrap; }
+.btn:hover { border-color: var(--faint); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--out); border-color: var(--out); background: transparent; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--accent); padding-inline: 8px; }
+.btn.sm { padding: 5px 10px; font-size: var(--t-xs); }
+.btn svg { width: 16px; height: 16px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--line-soft); color: var(--muted); white-space: nowrap; letter-spacing: .01em; }
+.pill.in { background: var(--in-soft); color: var(--in); } .pill.out { background: var(--out-soft); color: var(--out); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); } .pill.acc { background: var(--accent-soft); color: var(--accent); }
+.banner { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--r); background: var(--warn-soft); color: var(--ink); margin-bottom: var(--s4); font-size: var(--t-sm); }
+.banner strong { color: var(--warn); }
+.banner .btn { margin-left: auto; }
+.empty { text-align: center; padding: var(--s6) var(--s4); color: var(--muted); }
+.empty h2 { color: var(--ink); font-size: var(--t-lg); margin-bottom: var(--s2); }
+.empty p { max-width: 46ch; margin: 0 auto var(--s4); }
+.loading { padding: var(--s6) 0; color: var(--muted); display: flex; align-items: center; gap: var(--s3); }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } * { scroll-behavior: auto !important; } }
+
+/* ---------- setup ---------- */
+.setup { padding: var(--s4); margin-bottom: var(--s4); display: grid; gap: var(--s3); }
+.setup h2 { font-size: var(--t-lg); }
+.steps { display: grid; gap: var(--s2); }
+.step { display: flex; align-items: center; gap: var(--s3); padding: 10px 12px; border: 1px dashed var(--line); border-radius: var(--rs); background: var(--raise); text-align: left; width: 100%; }
+.step .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: var(--t-xs); font-weight: 700; background: var(--accent-soft); color: var(--accent); flex: none; }
+.step.done { border-style: solid; }
+.step.done .n { background: var(--in); color: var(--paper); }
+.step .t { font-weight: 600; } .step .d { font-size: var(--t-sm); color: var(--muted); }
+
+/* ---------- summary ---------- */
+.summary { display: grid; grid-template-columns: 1fr; gap: 0; margin-bottom: var(--s4); overflow: hidden; }
+.sum-main { padding: var(--s4); display: grid; gap: 2px; border-bottom: 1px solid var(--line); }
+.sum-main .big { font-family: var(--display); font-size: var(--t-2xl); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.sum-main .big.neg { color: var(--out); }
+.sum-main .meta { font-size: var(--t-sm); color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.sum-row { display: grid; grid-template-columns: 1fr 1fr; }
+.stub { padding: var(--s3) var(--s4); display: grid; gap: 2px; min-width: 0; background: none; border: 0; text-align: left; }
+.stub + .stub { border-left: 1px solid var(--line); }
+.stub .v { font-family: var(--num); font-variant-numeric: tabular-nums; font-size: var(--t-lg); font-weight: 600; }
+.stub .s { font-size: var(--t-xs); color: var(--muted); }
+@media (min-width: 640px) {
+  .summary { grid-template-columns: 1.3fr 2fr; }
+  .sum-main { border-bottom: 0; border-right: 1px solid var(--line); }
+}
+
+/* ---------- calendar ---------- */
+.cal-layout { display: grid; gap: var(--s4); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 1000px) { .cal-layout { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); } .day-panel { position: sticky; top: var(--s5); } }
+.cal-card { padding: var(--s3); }
+.cal-head { display: flex; align-items: center; gap: var(--s2); padding: 2px 2px var(--s3); }
+.cal-head h2 { font-size: var(--t-lg); font-weight: 700; margin-right: auto; }
+.iconbtn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--raise); display: grid; place-items: center; padding: 0; }
+.iconbtn svg { width: 18px; height: 18px; }
+.wk { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.wk span { text-align: center; font-size: 11px; font-weight: 600; color: var(--faint); padding-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line-soft); }
+.cell { position: relative; min-width: 0; aspect-ratio: 1 / 1.08; max-width: 100%; border: 0; border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); background: var(--raise); padding: 4px 4px 3px; display: flex; flex-direction: column; text-align: left; overflow: hidden; }
+.cell.blank { background: transparent; }
+.cell .dn { font-size: 12px; font-weight: 600; line-height: 1; }
+.cell .dots { display: flex; gap: 2px; margin-top: 4px; flex-wrap: wrap; }
+.dot { width: 6px; height: 6px; border-radius: 50%; }
+.dot.in { background: var(--in); } .dot.out { background: var(--out); } .dot.sp { background: var(--accent); } .dot.tx { background: var(--faint); }
+.cell .cb { margin-top: auto; font-family: var(--num); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 500; letter-spacing: -.01em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: clip; text-align: right; }
+.cell.past { background: var(--paper); }
+.cell.past .dn { color: var(--faint); }
+.cell.low { background: var(--warn-soft); } .cell.low .cb { color: var(--warn); font-weight: 600; }
+.cell.neg { background: var(--out-soft); } .cell.neg .cb { color: var(--out); font-weight: 600; }
+.cell.today .dn { background: var(--ink); color: var(--paper); border-radius: 999px; padding: 2px 5px; margin: -2px 0 0 -2px; align-self: flex-start; }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1; }
+.cell:hover:not(.blank) { box-shadow: inset 0 0 0 1px var(--accent); }
+.cell.sel:hover { box-shadow: inset 0 0 0 2px var(--accent); }
+@media (min-width: 640px) { .cell { aspect-ratio: auto; min-height: 76px; padding: 6px; } .cell .cb { font-size: 13px; } .cell .dn { font-size: 13px; } .cell .dot { width: 7px; height: 7px; } }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; color: var(--muted); padding: var(--s3) 2px 0; }
+.legend .dot { display: inline-block; margin-right: 5px; vertical-align: 0; }
+.legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.sw.low { background: var(--warn-soft); border: 1px solid var(--warn); }
+.sw.neg { background: var(--out-soft); border: 1px solid var(--out); }
+#rail-tabs { display: grid; gap: 2px; }
+
+/* ---------- register lists ---------- */
+.day-panel { padding: var(--s4); }
+.day-panel h3 { font-size: var(--t-lg); }
+.eod { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding: var(--s2) 0 var(--s3); border-bottom: 2px solid var(--ink); margin-bottom: var(--s1); }
+.eod .v { font-family: var(--num); font-size: var(--t-lg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.reg { display: grid; }
+.entry { display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; gap: var(--s3); align-items: center; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line-soft); padding: 10px 2px; }
+.entry:hover { background: var(--line-soft); }
+.entry .bar { align-self: stretch; border-radius: 2px; background: var(--faint); }
+.entry .bar.in { background: var(--in); } .entry .bar.out { background: var(--out); } .entry .bar.sp { background: var(--accent); }
+.entry .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entry .mt { font-size: var(--t-xs); color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin-top: 2px; }
+.entry .am { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
+.entry.dim .nm, .entry.dim .am { color: var(--muted); font-weight: 500; }
+.entry.skip .nm, .entry.skip .am { text-decoration: line-through; color: var(--faint); }
+.panel-acts { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4); }
+.note { font-size: var(--t-sm); color: var(--muted); padding: var(--s3) 0; }
+
+/* ---------- paychecks ---------- */
+.periods { display: grid; gap: var(--s4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .periods { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.period { padding: var(--s4); display: grid; gap: var(--s3); align-content: start; }
+.period.cur { border-color: var(--accent); box-shadow: var(--shadow); }
+.p-head { display: flex; align-items: flex-start; gap: var(--s2); }
+.p-head h3 { font-size: var(--t-lg); }
+.p-head .rng { font-size: var(--t-sm); color: var(--muted); }
+.p-head .pill { margin-left: auto; }
+.p-sec { display: grid; }
+.p-sec .ttl { display: flex; justify-content: space-between; font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .07em; font-weight: 700; color: var(--muted); padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.p-sec .ttl .num { letter-spacing: 0; }
+.p-sec .entry { padding: 8px 2px; }
+.p-total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding-top: var(--s3); border-top: 2px solid var(--ink); }
+.p-total .lbl { font-weight: 700; }
+.p-total .v { font-family: var(--display); font-weight: 800; font-size: var(--t-xl); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.p-bal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); font-size: var(--t-xs); color: var(--muted); background: var(--raise); border-radius: var(--rs); padding: var(--s2) var(--s3); border: 1px solid var(--line-soft); }
+.p-bal b { display: block; font-family: var(--num); font-size: var(--t-md); color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.p-bal b.neg { color: var(--out); } .p-bal b.low { color: var(--warn); }
+.pre-note { padding: var(--s3) var(--s4); font-size: var(--t-sm); }
+
+/* ---------- schedule ---------- */
+.avg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: var(--s4); }
+.avg div { padding: var(--s3) var(--s4); min-width: 0; }
+.avg div + div { border-left: 1px solid var(--line); }
+.avg .v { font-family: var(--num); font-size: var(--t-lg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sched { display: grid; gap: var(--s4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .sched { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; } }
+.sched section { padding: var(--s3) var(--s4) var(--s2); }
+.sched h2 { font-size: var(--t-md); display: flex; justify-content: space-between; align-items: baseline; padding-bottom: var(--s2); border-bottom: 2px solid var(--ink); }
+.sched h2 .num { font-family: var(--num); font-weight: 600; }
+.sched .hint { font-size: var(--t-sm); color: var(--muted); padding: var(--s3) 0; }
+
+/* ---------- activity ---------- */
+.mbar { display: flex; align-items: center; gap: var(--s2); margin-bottom: var(--s3); flex-wrap: wrap; }
+.mbar h2 { font-size: var(--t-lg); min-width: 9ch; text-align: center; }
+.mbar .tot { margin-left: auto; display: flex; gap: var(--s4); font-family: var(--num); font-variant-numeric: tabular-nums; font-size: var(--t-sm); }
+.act-list { padding: var(--s2) var(--s4) var(--s3); }
+.dhead { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .07em; font-weight: 700; color: var(--muted); padding: var(--s4) 0 4px; border-bottom: 1px solid var(--line); }
+
+/* ---------- settings ---------- */
+.set-grid { display: grid; gap: var(--s4); grid-template-columns: minmax(0, 1fr); max-width: 760px; }
+.set-card { padding: var(--s4); display: grid; gap: var(--s3); }
+.set-card h2 { font-size: var(--t-md); }
+.set-card p { margin: 0; color: var(--muted); font-size: var(--t-sm); max-width: 62ch; }
+.row { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+.rules { display: grid; }
+.rules .r { display: flex; gap: var(--s2); align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: var(--t-sm); }
+.rules .r code { font-family: var(--num); background: var(--line-soft); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+.rules .r .btn { margin-left: auto; }
+
+/* ---------- forms & sheet ---------- */
+.sheet { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+.sheet-scrim { position: absolute; inset: 0; background: var(--scrim); }
+.sheet-panel { position: relative; width: 100%; max-width: 560px; max-height: 92%; overflow: auto; background: var(--paper); border-radius: 18px 18px 0 0; box-shadow: var(--shadow); padding: var(--s4) max(16px, env(safe-area-inset-right, 0px)) calc(var(--s5) + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); box-sizing: border-box; overscroll-behavior: contain; }
+.sheet-panel.wide { max-width: 760px; }
+@media (min-width: 700px) { .sheet { align-items: center; padding: var(--s5); } .sheet-panel { border-radius: 18px; padding: var(--s5); max-height: 88vh; } }
+.sheet-top { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s4); }
+.sheet-top h2 { font-size: var(--t-xl); font-weight: 800; margin-right: auto; }
+.form { display: grid; gap: var(--s4); }
+.fld { display: grid; gap: 6px; min-width: 0; }
+.fld > label, .fld > .lbl { font-size: var(--t-sm); font-weight: 600; }
+.fld .hint { font-size: var(--t-xs); color: var(--muted); }
+.inp { width: 100%; box-sizing: border-box; border: 1px solid var(--line); background: var(--raise); border-radius: var(--rs); padding: 10px 12px; min-height: 44px; }
+.inp:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+textarea.inp { min-height: 90px; resize: vertical; font-family: var(--num); font-size: var(--t-sm); }
+.inp.money { font-family: var(--num); font-size: var(--t-lg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s3); }
+.inline { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.inline .inp { width: auto; flex: 1 1 90px; }
+.segm { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; background: var(--raise); gap: 3px; }
+.segm input { position: absolute; opacity: 0; pointer-events: none; }
+.segm label { text-align: center; padding: 8px 6px; border-radius: 7px; font-size: var(--t-sm); font-weight: 600; cursor: pointer; color: var(--muted); }
+.segm input:checked + label { background: var(--accent); color: var(--accent-ink); }
+.segm input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 1px; }
+.check { display: flex; gap: var(--s2); align-items: flex-start; font-size: var(--t-sm); }
+.check input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); flex: none; }
+.preview { background: var(--raise); border: 1px solid var(--line-soft); border-radius: var(--rs); padding: var(--s3); font-size: var(--t-sm); }
+.preview .dates { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.preview .dates span { font-family: var(--num); background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 999px; font-size: var(--t-xs); font-weight: 600; }
+.err { color: var(--out); font-size: var(--t-sm); font-weight: 600; }
+.sheet-acts { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; padding-top: var(--s2); }
+.sheet-acts .push { margin-left: auto; }
+.box { border: 1px solid var(--line); border-radius: var(--rs); padding: var(--s3); background: var(--raise); display: grid; gap: var(--s3); }
+.box h3 { font-size: var(--t-md); font-family: var(--body); font-weight: 700; }
+.kv { display: flex; justify-content: space-between; gap: var(--s3); font-size: var(--t-sm); }
+.kv b { font-family: var(--num); font-variant-numeric: tabular-nums; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--rs); }
+.tbl { border-collapse: collapse; width: 100%; font-size: var(--t-xs); }
+.tbl th, .tbl td { padding: 6px 8px; border-bottom: 1px solid var(--line-soft); text-align: left; white-space: nowrap; }
+.tbl th { background: var(--line-soft); font-weight: 600; }
+.tbl td.r { text-align: right; font-family: var(--num); }
+.rv-list { display: grid; max-height: 46vh; overflow: auto; border: 1px solid var(--line); border-radius: var(--rs); background: var(--raise); }
+.rv { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 4px var(--s2); padding: 8px 10px; border-bottom: 1px solid var(--line-soft); align-items: center; }
+.rv input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.rv .d { font-size: var(--t-sm); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv .a { font-family: var(--num); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.rv .x { grid-column: 2 / 4; display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; font-size: var(--t-xs); color: var(--muted); }
+.rv select { font-size: var(--t-xs); padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); max-width: 100%; }
+.rv.off .d, .rv.off .a { color: var(--faint); }
+.guide { margin: 0; padding-left: 1.3em; display: grid; gap: 10px; font-size: var(--t-sm); }
+.guide li { padding-left: 4px; }
+.guide a { color: var(--accent); font-weight: 600; }
+.guide code, .code { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; }
+.guide code { background: var(--line-soft); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); border-radius: var(--rs); padding: var(--s3); font-size: var(--t-xs); overflow-x: auto; white-space: pre; }
+#link-text { white-space: pre-wrap; word-break: break-all; }
+.chip-sync { cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 30; background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px; font-size: var(--t-sm); font-weight: 500; box-shadow: var(--shadow); max-width: min(92vw, 460px); text-align: center; }
+@media (min-width: 880px) { .toast { bottom: var(--s5); } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="rail" aria-label="Sections">
+    <div class="brand"><span class="brand-mark"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>Payday Ledger</div>
+    <div id="rail-tabs"></div>
+    <button class="chip-sync" id="sync2" data-act="tab" data-tab="set"><span class="dot"></span><span class="lbl">Loading</span></button>
+  </nav>
+  <div style="min-width:0">
+    <header class="top"><div class="top-in">
+      <div class="brand"><span class="brand-mark"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>Payday Ledger</div>
+      <button class="chip-sync" id="sync1" data-act="tab" data-tab="set"><span class="dot"></span><span class="lbl">Loading</span></button>
+    </div></header>
+    <main id="view" aria-live="polite"></main>
+  </div>
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-scrim" data-act="close"></div>
+  <div class="sheet-panel" id="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">
+    <div class="sheet-top"><h2 id="sheet-title"></h2><button class="iconbtn" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24" class="ico"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>/* Payday Ledger engine: dates, schedules, projections, pay periods, CSV. Pure functions. */
+(function (root) {
+  'use strict';
+  const DAY = 86400000;
+
+  // ---------- dates (day numbers = days since 1970-01-01, timezone-free) ----------
+  function fromYMD(y, m, d) { return Math.floor(Date.UTC(y, m - 1, d) / DAY); }
+  function dn(s) {
+    if (typeof s === 'number') return s;
+    if (!s) return NaN;
+    const p = String(s).split('-').map(Number);
+    return fromYMD(p[0], p[1], p[2]);
+  }
+  function ds(n) { return new Date(n * DAY).toISOString().slice(0, 10); }
+  function ymd(n) { const t = new Date(n * DAY); return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() }; }
+  function wday(n) { return (((n % 7) + 7) + 4) % 7; } // 0 = Sunday
+  function dim(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+  function todayN() { const t = new Date(); return fromYMD(t.getFullYear(), t.getMonth() + 1, t.getDate()); }
+  function monthIdx(y, m) { return y * 12 + (m - 1); }
+  function idxYM(i) { return { y: Math.floor(i / 12), m: (i % 12) + 1 }; }
+  function addMonths(n, k) { const a = ymd(n); const i = monthIdx(a.y, a.m) + k; const b = idxYM(i); return fromYMD(b.y, b.m, Math.min(a.d, dim(b.y, b.m))); }
+
+  function nthWeekday(y, m, n, wd) {
+    const D = dim(y, m);
+    if (n === -1 || n >= 5) { const last = fromYMD(y, m, D); return last - ((wday(last) - wd + 7) % 7); }
+    const first = fromYMD(y, m, 1);
+    return first + ((wd - wday(first) + 7) % 7) + 7 * (n - 1);
+  }
+
+  // ---------- recurrence ----------
+  function normRule(r) {
+    r = Object.assign({ type: 'once', every: 1, weekend: 'none' }, r || {});
+    r.every = Math.max(1, Math.floor(+r.every || 1));
+    return r;
+  }
+
+  // raw (unadjusted) dates of a rule inside [from, to]
+  function rawDates(rule, from, to) {
+    const r = normRule(rule);
+    const start = dn(r.start);
+    const out = [];
+    if (!isFinite(start)) return out;
+    const end = r.end ? dn(r.end) : Infinity;
+    const lo = Math.max(from, start), hi = Math.min(to, end);
+    if (lo > hi) return out;
+    switch (r.type) {
+      case 'once':
+        if (start >= lo && start <= hi) out.push(start);
+        break;
+      case 'days':
+      case 'weeks': {
+        const step = r.type === 'weeks' ? 7 * r.every : r.every;
+        const k = Math.ceil((lo - start) / step);
+        for (let x = start + k * step; x <= hi; x += step) out.push(x);
+        break;
+      }
+      case 'monthly':
+      case 'monthlyWeekday': {
+        const s = ymd(start), i0 = monthIdx(s.y, s.m);
+        const l = ymd(lo), li = monthIdx(l.y, l.m);
+        let k = Math.max(0, Math.floor((li - i0) / r.every) - 1);
+        for (let guard = 0; guard < 5000; guard++, k++) {
+          const { y, m } = idxYM(i0 + k * r.every);
+          if (fromYMD(y, m, 1) > hi) break;
+          let x;
+          if (r.type === 'monthly') {
+            const day = r.day == null || r.day === '' ? s.d : +r.day;
+            const D = dim(y, m);
+            x = fromYMD(y, m, day <= 0 || day > D ? D : day);
+          } else {
+            x = nthWeekday(y, m, r.nth == null ? 1 : +r.nth, r.weekday == null ? wday(start) : +r.weekday);
+          }
+          if (x >= lo && x <= hi) out.push(x);
+        }
+        break;
+      }
+      case 'twiceMonthly': {
+        const days = (r.days && r.days.length ? r.days : [1, 15]).map(Number);
+        const l = ymd(lo);
+        for (let i = monthIdx(l.y, l.m), guard = 0; guard < 5000; i++, guard++) {
+          const { y, m } = idxYM(i);
+          if (fromYMD(y, m, 1) > hi) break;
+          const D = dim(y, m);
+          const xs = [...new Set(days.map(d => fromYMD(y, m, d <= 0 || d > D ? D : d)))].sort((a, b) => a - b);
+          for (const x of xs) if (x >= lo && x <= hi) out.push(x);
+        }
+        break;
+      }
+      case 'yearly': {
+        const s = ymd(start), l = ymd(lo);
+        let k = Math.max(0, Math.floor((l.y - s.y) / r.every) - 1);
+        for (let guard = 0; guard < 5000; guard++, k++) {
+          const y = s.y + k * r.every;
+          const x = fromYMD(y, s.m, Math.min(s.d, dim(y, s.m)));
+          if (x > hi) break;
+          if (x >= lo) out.push(x);
+        }
+        break;
+      }
+    }
+    return out;
+  }
+
+  function isMember(rule, d) { return rawDates(rule, d, d).length > 0; }
+
+  function adjust(x, mode) {
+    const w = wday(x);
+    if (mode === 'before') { if (w === 6) return x - 1; if (w === 0) return x - 2; }
+    else if (mode === 'after') { if (w === 6) return x + 2; if (w === 0) return x + 1; }
+    else if (mode === 'nearest') { if (w === 6) return x - 1; if (w === 0) return x + 1; }
+    return x;
+  }
+
+  function nominalPeriod(rule) {
+    const r = normRule(rule);
+    switch (r.type) {
+      case 'days': return r.every;
+      case 'weeks': return 7 * r.every;
+      case 'monthly': case 'monthlyWeekday': return Math.round(30.44 * r.every);
+      case 'twiceMonthly': return 15;
+      case 'yearly': return 365 * r.every;
+      default: return 31;
+    }
+  }
+
+  // how many times per month on average
+  function perMonth(rule) {
+    const r = normRule(rule);
+    switch (r.type) {
+      case 'days': return 365.25 / 12 / r.every;
+      case 'weeks': return 365.25 / 12 / 7 / r.every;
+      case 'monthly': case 'monthlyWeekday': return 1 / r.every;
+      case 'twiceMonthly': return 2;
+      case 'yearly': return 1 / (12 * r.every);
+      default: return 0;
+    }
+  }
+
+  const SIGN = { income: 1, bill: -1, spend: -1 };
+
+  // occurrences of one item whose final date is inside [from, to]
+  function itemOccs(item, from, to) {
+    const r = normRule(item.rule);
+    const ov = item.ov || {};
+    const raws = rawDates(r, from - 7, to + 7);
+    const seen = new Set(raws);
+    for (const k in ov) {
+      const o = ov[k];
+      if (!o || !o.date) continue;
+      const rd = dn(k);
+      if (seen.has(rd)) continue;
+      const nd = dn(o.date);
+      if (nd >= from && nd <= to && isMember(r, rd)) { raws.push(rd); seen.add(rd); }
+    }
+    const out = [];
+    for (const rd of raws) {
+      const k = ds(rd);
+      const o = ov[k] || null;
+      let d = adjust(rd, r.weekend);
+      const shifted = d !== rd;
+      if (o && o.date) d = dn(o.date);
+      if (d < from || d > to) continue;
+      const hasAmt = o && o.amount != null && o.amount !== '' && isFinite(+o.amount);
+      out.push({
+        key: item.id + '|' + k, item, raw: rd, date: d,
+        planned: hasAmt ? +o.amount : (+item.amount || 0),
+        sign: SIGN[item.kind] || -1,
+        skip: !!(o && o.skip), moved: !!(o && o.date), changed: !!hasAmt, shifted
+      });
+    }
+    out.sort((a, b) => a.date - b.date);
+    return out;
+  }
+
+  function anchorOf(st, today) {
+    const a = st.settings && st.settings.anchor;
+    if (a && a.date && isFinite(dn(a.date))) {
+      return { date: dn(a.date), balance: +a.balance || 0, setAt: a.setAt || 0, pending: new Set(a.pending || []), set: true };
+    }
+    return { date: today - 1, balance: 0, setAt: 0, pending: new Set(), set: false };
+  }
+
+  // Is this transaction NOT yet reflected in the anchor balance?
+  function afterAnchor(t, A) {
+    const d = dn(t.date);
+    if (d > A.date) return true;
+    if (d < A.date) return false;
+    return t.src !== 'csv' && (t.created || 0) > (A.setAt || 0);
+  }
+
+  function liveItems(st) { return Object.values(st.items || {}).filter(i => i && !i.deleted && i.id); }
+  function liveTxns(st) { return Object.values(st.txns || {}).filter(t => t && t.id && t.date && isFinite(+t.amount)); }
+
+  /**
+   * Build the ledger: every occurrence with status, and daily projected balances.
+   * opts: { today, from, to }  (day numbers; from/to = range the caller will look at)
+   */
+  function build(st, opts) {
+    const today = opts.today != null ? opts.today : todayN();
+    const A = anchorOf(st, today);
+    const from = Math.min(opts.from != null ? opts.from : today, A.date);
+    const to = Math.max(opts.to != null ? opts.to : today + 120, A.date + 1);
+    const gFrom = from - 400, gTo = to + 400;
+    const items = liveItems(st);
+    const txns = liveTxns(st);
+    const txById = new Map(txns.map(t => [t.id, t]));
+    const matched = new Map();
+    for (const t of txns) if (t.match) matched.set(t.match, t);
+
+    const occs = [];
+    const spendTx = new Map();
+    for (const t of txns) if (t.item && !t.match) {
+      if (!spendTx.has(t.item)) spendTx.set(t.item, []);
+      spendTx.get(t.item).push(t);
+    }
+
+    for (const it of items) {
+      const list = itemOccs(it, gFrom, gTo);
+      if (it.kind === 'spend') {
+        const live = list.filter(o => !o.skip);
+        const period = nominalPeriod(it.rule);
+        for (let i = 0; i < live.length; i++) live[i].wEnd = i + 1 < live.length ? live[i + 1].date : live[i].date + period;
+        const ts = (spendTx.get(it.id) || []).slice().sort((a, b) => dn(a.date) - dn(b.date));
+        for (const o of live) {
+          const inW = ts.filter(t => { const d = dn(t.date); return d >= o.date && d < o.wEnd; });
+          let before = 0, after = 0;
+          for (const t of inW) { const v = -(+t.amount); if (afterAnchor(t, A)) after += v; else before += v; }
+          o.txns = inW; o.spent = before + after;
+          o.left = Math.max(o.planned - o.spent, 0); o.over = Math.max(o.spent - o.planned, 0);
+          if (o.wEnd <= A.date + 1) { o.status = 'past'; o.count = 0; }
+          else {
+            const remaining = Math.max(o.planned - before, 0);
+            const reserve = Math.min(Math.max(remaining - after, 0), remaining);
+            o.count = -reserve; o.reserve = reserve;
+            o.countDate = Math.max(o.date, A.date + 1);
+            o.status = o.date > A.date ? 'upcoming' : 'active';
+          }
+        }
+      }
+      for (const o of list) {
+        o.txn = matched.get(o.key) || null;
+        if (o.skip) { o.status = 'skipped'; o.count = 0; continue; }
+        if (it.kind === 'spend') continue;
+        if (o.txn) { o.status = 'paid'; o.actual = +o.txn.amount; o.count = 0; continue; }
+        if (o.date > A.date || (o.date === A.date && A.pending.has(o.key))) {
+          o.status = o.date < today ? 'due' : 'upcoming';
+          o.count = o.sign * o.planned; o.countDate = o.date;
+        } else { o.status = 'past'; o.count = 0; }
+      }
+      occs.push(...list);
+    }
+    occs.sort((a, b) => a.date - b.date || a.sign - b.sign);
+
+    // projection
+    const H = to + 400;
+    const n = H - A.date + 1;
+    const delta = new Float64Array(n);
+    const add = (d, v) => { if (d >= A.date && d <= H) delta[d - A.date] += v; };
+    for (const o of occs) if (o.count) add(o.countDate, o.count);
+    const counted = new Set();
+    for (const t of txns) if (afterAnchor(t, A)) { add(dn(t.date), +t.amount); counted.add(t.id); }
+    const bal = new Float64Array(n);
+    let run = A.balance;
+    for (let i = 0; i < n; i++) { run += delta[i]; bal[i] = Math.round(run * 100) / 100; }
+
+    function balAt(d) { if (d < A.date || d > H) return null; return bal[d - A.date]; }
+    function occsIn(f, t) { return occs.filter(o => o.date >= f && o.date <= t); }
+    function lowest(f, t) {
+      f = Math.max(f, A.date); let best = null;
+      for (let d = f; d <= Math.min(t, H); d++) { const b = bal[d - A.date]; if (best === null || b < best.bal) best = { date: d, bal: b }; }
+      return best;
+    }
+    function dayEntries(d) {
+      const os = occs.filter(o => o.date === d || (o.reserve && o.countDate === d && o.date !== d));
+      const ts = txns.filter(t => {
+        if (dn(t.date) !== d) return false;
+        if (t.match) { const o = occs.find(x => x.key === t.match); if (o && o.date === d) return false; }
+        return true;
+      });
+      return { occs: os, txns: ts };
+    }
+    return { A, today, occs, txns, txById, balAt, occsIn, lowest, dayEntries, counted, H };
+  }
+
+  // ---------- pay periods (Ramsey-style paycheck planning) ----------
+  function payDates(led) {
+    const s = new Set();
+    for (const o of led.occs) if (o.item.kind === 'income' && o.item.paycheck && !o.skip) s.add(o.date);
+    return [...s].sort((a, b) => a - b);
+  }
+
+  function periods(led, from, to) {
+    const pays = payDates(led);
+    const out = [];
+    for (let i = 0; i < pays.length - 1; i++) {
+      const s = pays[i], e = pays[i + 1] - 1;
+      if (e < from || s > to) continue;
+      out.push(periodDetail(led, s, e, pays[i + 1]));
+    }
+    return out;
+  }
+
+  function periodDetail(led, s, e, next) {
+    const os = led.occsIn(s, e).filter(o => o.status !== 'skipped');
+    const inc = os.filter(o => o.item.kind === 'income');
+    const bills = os.filter(o => o.item.kind === 'bill');
+    const spend = os.filter(o => o.item.kind === 'spend');
+    const amt = o => (o.status === 'paid' ? Math.abs(o.actual) : o.planned);
+    const income = inc.reduce((a, o) => a + amt(o), 0);
+    const billTotal = bills.reduce((a, o) => a + amt(o), 0);
+    const spendTotal = spend.reduce((a, o) => a + o.planned, 0);
+    const other = led.txns.filter(t => { const d = dn(t.date); return d >= s && d <= e && !t.item && !t.match; });
+    const otherOut = other.reduce((a, t) => a + (+t.amount < 0 ? -t.amount : 0), 0);
+    const otherIn = other.reduce((a, t) => a + (+t.amount > 0 ? +t.amount : 0), 0);
+    const low = led.lowest(s, e);
+    return {
+      start: s, end: e, next, inc, bills, spend, other, income, billTotal, spendTotal, otherOut, otherIn,
+      left: round2(income - billTotal - spendTotal),
+      balStart: led.balAt(s - 1), balEnd: led.balAt(e), low
+    };
+  }
+
+  function round2(x) { return Math.round(x * 100) / 100; }
+
+  // ---------- text helpers ----------
+  const WD = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const MO = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function ord(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+  function dayName(d) { return d <= 0 ? 'last day' : ord(d); }
+
+  function describe(rule) {
+    const r = normRule(rule);
+    const st = dn(r.start);
+    let t;
+    switch (r.type) {
+      case 'once': t = 'One time'; break;
+      case 'days': t = r.every === 1 ? 'Every day' : `Every ${r.every} days`; break;
+      case 'weeks': {
+        const w = WD[wday(st)] + 's';
+        t = r.every === 1 ? `Every week on ${w}` : r.every === 2 ? `Every 2 weeks on ${w}` : `Every ${r.every} weeks on ${w}`;
+        break;
+      }
+      case 'monthly': {
+        const d = r.day == null || r.day === '' ? ymd(st).d : +r.day;
+        t = (r.every === 1 ? 'Monthly' : `Every ${r.every} months`) + ` on the ${dayName(d)}`;
+        break;
+      }
+      case 'twiceMonthly': {
+        const days = (r.days || [1, 15]).map(Number);
+        t = `Twice a month: the ${days.map(dayName).join(' and ')}`;
+        break;
+      }
+      case 'monthlyWeekday': {
+        const n = r.nth == null ? 1 : +r.nth;
+        const nm = n === -1 ? 'last' : ord(n);
+        const w = WD[r.weekday == null ? wday(st) : +r.weekday];
+        t = `The ${nm} ${w} ${r.every === 1 ? 'of every month' : `every ${r.every} months`}`;
+        break;
+      }
+      case 'yearly': { const a = ymd(st); t = (r.every === 1 ? 'Every year' : `Every ${r.every} years`) + ` on ${MO[a.m - 1]} ${a.d}`; break; }
+      default: t = '';
+    }
+    if (r.weekend === 'before') t += ', Friday if on a weekend';
+    else if (r.weekend === 'after') t += ', Monday if on a weekend';
+    else if (r.weekend === 'nearest') t += ', nearest weekday';
+    return t;
+  }
+
+  function nextDates(item, from, count) {
+    const out = [];
+    let f = from;
+    for (let tries = 0; tries < 12 && out.length < count; tries++) {
+      const span = Math.max(nominalPeriod(item.rule) * count * 2, 60);
+      const os = itemOccs(item, f, f + span).filter(o => !o.skip);
+      for (const o of os) { if (out.length < count && (!out.length || o.date > out[out.length - 1].date)) out.push(o); }
+      f = f + span + 1;
+      if (normRule(item.rule).type === 'once') break;
+    }
+    return out;
+  }
+
+  // ---------- descriptions, categorization ----------
+  function normDesc(s) {
+    return String(s || '').toUpperCase().replace(/[0-9#*]+/g, ' ').replace(/[^A-Z&' ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function ruleKey(s) { return normDesc(s).split(' ').filter(w => w.length > 1).slice(0, 3).join(' '); }
+  function nameTokens(name) { return normDesc(name).split(' ').filter(w => w.length >= 3 && !STOP.has(w)); }
+  const STOP = new Set(['THE', 'AND', 'FOR', 'BILL', 'PAYMENT', 'PAY', 'MONTHLY', 'WEEKLY', 'FROM', 'CARD', 'POS', 'DEBIT', 'PURCHASE', 'ACH']);
+  function nameHit(item, desc) {
+    const D = ' ' + normDesc(desc) + ' ';
+    const toks = nameTokens(item.name);
+    return toks.some(t => D.includes(' ' + t + ' ') || (t.length >= 5 && D.includes(t)));
+  }
+
+  function suggestItem(st, desc, amount) {
+    const rules = (st.settings && st.settings.rules) || {};
+    const k = ruleKey(desc);
+    const items = liveItems(st);
+    if (k && rules[k] && items.some(i => i.id === rules[k])) return rules[k];
+    const sign = amount > 0 ? 'income' : null;
+    const cand = items.filter(i => (sign ? i.kind === 'income' : i.kind !== 'income') && nameHit(i, desc));
+    return cand.length ? cand[0].id : null;
+  }
+
+  // find the scheduled bill/paycheck this bank row most likely is
+  function suggestMatch(led, st, t, used, onlyItem) {
+    const d = dn(t.date), amt = +t.amount;
+    const rules = (st.settings && st.settings.rules) || {};
+    const ruled = rules[ruleKey(t.desc)];
+    let best = null;
+    for (const o of led.occs) {
+      if (o.item.kind === 'spend' || o.skip || used.has(o.key)) continue;
+      if (o.txn && o.txn.src !== 'mark') continue; // a bank row may replace a "marked paid" entry
+      if (onlyItem && o.item.id !== onlyItem) continue;
+      if (Math.sign(amt) !== o.sign) continue;
+      const dd = Math.abs(o.date - d);
+      if (dd > 6) continue;
+      const diff = Math.abs(Math.abs(amt) - o.planned);
+      const named = ruled === o.item.id || nameHit(o.item, t.desc) || onlyItem === o.item.id;
+      const tol = named ? Math.max(5, o.planned * 0.5) : Math.max(1, o.planned * 0.02);
+      if (diff > tol) continue;
+      const score = dd + (o.planned ? diff / o.planned * 20 : diff) - (named ? 3 : 0);
+      if (!best || score < best.score) best = { occ: o, score };
+    }
+    return best ? best.occ : null;
+  }
+
+  // ---------- CSV ----------
+  function parseCSV(text) {
+    text = String(text || '').replace(/^﻿/, '');
+    const first = text.split(/\r?\n/).find(l => l.trim()) || '';
+    const counts = { ',': 0, ';': 0, '\t': 0 };
+    let q = false;
+    for (const ch of first) { if (ch === '"') q = !q; else if (!q && ch in counts) counts[ch]++; }
+    const sep = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || ',';
+    const rows = []; let row = [], cell = '', inQ = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else inQ = false; }
+        else cell += c;
+      } else if (c === '"') inQ = true;
+      else if (c === sep) { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell); cell = '';
+        if (row.some(x => x.trim() !== '')) rows.push(row.map(x => x.trim()));
+        row = [];
+      } else cell += c;
+    }
+    row.push(cell);
+    if (row.some(x => x.trim() !== '')) rows.push(row.map(x => x.trim()));
+    return rows;
+  }
+
+  function parseAmount(s) {
+    if (s == null) return NaN;
+    let t = String(s).trim();
+    if (!t) return NaN;
+    let neg = false;
+    if (/^\(.*\)$/.test(t)) { neg = true; t = t.slice(1, -1); }
+    if (/-$/.test(t)) { neg = true; t = t.slice(0, -1); }
+    if (/\bDR\b/i.test(t)) { neg = true; }
+    t = t.replace(/\b(CR|DR)\b/gi, '').replace(/[$€£\s,]/g, '').replace(/^\+/, '');
+    if (t.startsWith('-')) { neg = !neg; t = t.slice(1); }
+    if (!/^\d*\.?\d+$/.test(t)) return NaN;
+    const v = parseFloat(t);
+    return neg ? -v : v;
+  }
+
+  const MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
+  function parseDate(s, fmt) {
+    s = String(s || '').trim();
+    if (!s) return null;
+    let m;
+    const ok = (y, mo, d) => {
+      if (y < 100) y += 2000;
+      if (mo < 1 || mo > 12 || d < 1 || d > dim(y, mo) || y < 1990 || y > 2100) return null;
+      return ds(fromYMD(y, mo, d));
+    };
+    if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/))) return fmt && fmt !== 'YMD' ? null : ok(+m[1], +m[2], +m[3]);
+    if ((m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/))) {
+      if (fmt === 'DMY') return ok(+m[3], +m[2], +m[1]);
+      if (fmt === 'MDY' || !fmt) return ok(+m[3], +m[1], +m[2]);
+      return null;
+    }
+    if ((m = s.match(/^(\d{4})(\d{2})(\d{2})$/))) return ok(+m[1], +m[2], +m[3]);
+    if ((m = s.match(/^([A-Za-z]{3,4})[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})/))) { const mo = MON[m[1].toLowerCase()]; return mo ? ok(+m[3], mo, +m[2]) : null; }
+    if ((m = s.match(/^(\d{1,2})[\s-]([A-Za-z]{3,4})[a-z]*[\s-](\d{2,4})/))) { const mo = MON[m[2].toLowerCase()]; return mo ? ok(+m[3], mo, +m[1]) : null; }
+    return null;
+  }
+
+  function detectDateFormat(values) {
+    const vals = values.filter(Boolean).slice(0, 200);
+    let best = 'MDY', bestN = -1;
+    for (const f of ['MDY', 'DMY', 'YMD']) {
+      const n = vals.filter(v => parseDate(v, f)).length;
+      if (n > bestN) { best = f; bestN = n; }
+    }
+    if (bestN <= 0) return 'AUTO';
+    return best;
+  }
+
+  function guessColumns(rows) {
+    // find header row: first row with a "date"-ish cell among first 10
+    let h = 0;
+    for (let i = 0; i < Math.min(rows.length, 10); i++) {
+      if (rows[i].some(c => /date/i.test(c)) && rows[i].some(c => /amount|debit|credit|withdraw|deposit/i.test(c))) { h = i; break; }
+    }
+    const head = rows[h] || [];
+    const hasHeader = head.some(c => /date|amount|description|payee|debit|credit/i.test(c));
+    const find = (re, not) => head.findIndex(c => re.test(c) && !(not && not.test(c)));
+    let date = find(/^(posted|posting|transaction)?\s*date$/i);
+    if (date < 0) date = find(/date/i);
+    let desc = find(/description|payee|merchant|memo|name|details|narrative/i, /date/i);
+    let amount = find(/^amount$/i);
+    if (amount < 0) amount = find(/amount/i, /balance/i);
+    let debit = find(/debit|withdraw|money out|paid out/i);
+    let credit = find(/credit|deposit|money in|paid in/i, /card/i);
+    if (amount >= 0) { debit = -1; credit = -1; }
+    if (!hasHeader) {
+      // headerless: guess by content of first row
+      const r0 = rows[0] || [];
+      date = r0.findIndex(c => parseDate(c));
+      amount = r0.findIndex((c, i) => i !== date && isFinite(parseAmount(c)));
+      desc = r0.findIndex((c, i) => i !== date && i !== amount && /[A-Za-z]/.test(c));
+    }
+    return { headerRow: hasHeader ? h : -1, date, desc, amount, debit, credit };
+  }
+
+  function txnHash(date, amount, desc) { return date + '|' + (+amount).toFixed(2) + '|' + normDesc(desc).slice(0, 40); }
+
+  const api = {
+    DAY, fromYMD, dn, ds, ymd, wday, dim, todayN, addMonths, nthWeekday, normRule, rawDates, adjust, itemOccs,
+    nominalPeriod, perMonth, anchorOf, afterAnchor, build, payDates, periods, periodDetail, describe, nextDates,
+    normDesc, ruleKey, nameHit, suggestItem, suggestMatch, parseCSV, parseAmount, parseDate, detectDateFormat,
+    guessColumns, txnHash, liveItems, liveTxns, WD, MO, ord, round2
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.PE = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>(function () {
+  'use strict';
+  const P = window.PE;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const clone = x => (x == null ? x : JSON.parse(JSON.stringify(x)));
+  const prune = x => JSON.parse(JSON.stringify(x, (k, v) => (v === null ? undefined : v)));
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const USD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const fm = v => (v < -0.004 ? '−' : '') + USD.format(Math.abs(v));
+  const fmS = v => (v > 0.004 ? '+' : v < -0.004 ? '−' : '') + USD.format(Math.abs(v));
+  function fmC(v) {
+    const a = Math.abs(v);
+    let s;
+    if (a >= 100000) s = '$' + Math.round(a / 1000) + 'k';
+    else if (a >= 10000) s = '$' + (a / 1000).toFixed(1) + 'k';
+    else s = '$' + Math.round(a).toLocaleString('en-US');
+    return (v <= -0.5 ? '−' : '') + s;
+  }
+  const MOS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const WDS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const fdS = n => { const a = P.ymd(n); return MOS[a.m - 1] + ' ' + a.d; };
+  const fdW = n => WDS[P.wday(n)] + ', ' + fdS(n);
+  const fdL = n => { const a = P.ymd(n); return P.WD[P.wday(n)] + ', ' + P.MO[a.m - 1] + ' ' + a.d + (a.y !== P.ymd(P.todayN()).y ? ', ' + a.y : ''); };
+  const fdY = n => { const a = P.ymd(n); return MOS[a.m - 1] + ' ' + a.d + ', ' + a.y; };
+
+  const ICO = {
+    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    pay: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
+    sched: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
+    act: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+    set: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+    left: '<path d="M15 18l-6-6 6-6"/>', right: '<path d="M9 18l6-6-6-6"/>', plus: '<path d="M12 5v14M5 12h14"/>',
+    up: '<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>'
+  };
+  const svg = k => `<svg viewBox="0 0 24 24" class="ico" aria-hidden="true">${ICO[k]}</svg>`;
+  const TABS = [['cal', 'Calendar'], ['pay', 'Paychecks'], ['sched', 'Schedule'], ['act', 'Activity'], ['set', 'Settings']];
+  const KIND_LABEL = { income: 'Money in', bill: 'Bill', spend: 'Spending budget' };
+  const barOf = k => (k === 'income' ? 'in' : k === 'bill' ? 'out' : 'sp');
+
+  // ---------------- state ----------------
+  const S = { settings: {}, items: {}, txns: {} };
+  const UI = { tab: 'cal', ym: null, sel: null, actYM: null, showPast: false };
+  const LS_KEY = 'paydayLedger.local.v1';
+  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } };
+  const lsDel = k => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } };
+  { const t = lsGet('paydayLedger.tab'); if (t && TABS.some(x => x[0] === t)) UI.tab = t; }
+
+  let MODE = 'loading';
+  const Store = { refs: null, loaded: { s: false, i: false, m: false }, pending: 0, migrated: false, failed: false };
+  const isReady = () => MODE === 'local' || MODE === 'cache' || (MODE === 'sync' && Store.loaded.s && Store.loaded.i && Store.loaded.m);
+
+  const lowMark = () => { const v = S.settings.low; return v == null || v === '' || !isFinite(+v) ? 100 : +v; };
+  const weekStart = () => (+S.settings.weekStart === 1 ? 1 : 0);
+  const rulesMap = () => { const r = S.settings.rules || {}; const o = {}; for (const k in r) if (r[k]) o[k] = r[k]; return o; };
+  const items = () => P.liveItems(S);
+
+  let LED = null, LKEY = '', VER = 0;
+  function ledger() {
+    const T = P.todayN();
+    let from = T - 120, to = T + 400;
+    if (UI.ym) { const f = P.fromYMD(UI.ym.y, UI.ym.m, 1); from = Math.min(from, f - 7); to = Math.max(to, f + 45); }
+    const k = VER + ':' + T + ':' + from + ':' + to;
+    if (LED && LKEY === k) return LED;
+    LED = P.build(S, { today: T, from, to }); LKEY = k;
+    return LED;
+  }
+  function changed() { VER++; scheduleRender(); }
+
+  // ---------------- storage ----------------
+  // Two places data can live: this browser (localStorage) or the user's own Firebase project.
+  const FB_URL = 'https://www.gstatic.com/firebasejs/12.19.0/';
+  const CFG_KEY = 'paydayLedger.firebase.v1';
+  const CACHE_KEY = 'paydayLedger.cache.v1';
+  const importer = window.__PL_IMPORT__ || (u => import(u));
+  let FBX = null, USER = null, unsubs = [], pendingSetupMsg = '';
+
+  const getCfg = () => { try { return JSON.parse(lsGet(CFG_KEY) || 'null'); } catch (e) { return null; } };
+  function parseCfg(text) {
+    const o = {}, re = /["']?([A-Za-z]+)["']?\s*:\s*["']([^"']+)["']/g;
+    let m;
+    while ((m = re.exec(String(text || '')))) o[m[1]] = m[2].trim();
+    if (!o.apiKey || !o.projectId || !o.appId) return null;
+    return { apiKey: o.apiKey, authDomain: o.authDomain || o.projectId + '.firebaseapp.com', projectId: o.projectId, appId: o.appId, storageBucket: o.storageBucket, messagingSenderId: o.messagingSenderId };
+  }
+  const b64e = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const b64d = s => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
+  function setupLink() { const c = getCfg(); return c ? location.origin + location.pathname + '#setup=' + b64e(JSON.stringify(c)) : ''; }
+  function readSetupHash() {
+    const m = location.hash.match(/^#setup=([A-Za-z0-9_-]+)/);
+    if (!m) return;
+    try {
+      const c = parseCfg(b64d(m[1]));
+      if (c) { lsSet(CFG_KEY, JSON.stringify(c)); pendingSetupMsg = 'signin'; }
+    } catch (e) { /* ignore bad link */ }
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+  }
+
+  async function loadFirebase(cfg) {
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 20000));
+    const [A, Au, F] = await Promise.race([Promise.all(['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js'].map(f => importer(FB_URL + f))), timeout]);
+    const app = A.initializeApp(cfg, 'payday-' + cfg.projectId + '-' + Date.now());
+    const auth = Au.getAuth(app);
+    let db;
+    try { db = F.initializeFirestore(app, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) }); }
+    catch (e) { db = F.getFirestore(app); }
+    return { app, auth, db, Au, F };
+  }
+
+  async function boot() {
+    readSetupHash();
+    render();
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+    const cfg = getCfg();
+    if (!cfg) { startLocal(); return; }
+    try { FBX = await loadFirebase(cfg); }
+    catch (e) { fallbackOffline(); return; }
+    let first = true;
+    FBX.Au.onAuthStateChanged(FBX.auth, u => {
+      if (u) {
+        if (!USER || USER.uid !== u.uid) { USER = { uid: u.uid, email: u.email || '' }; startSync(u.uid); }
+      } else {
+        USER = null; stopSync(); startLocal();
+        if (first && pendingSetupMsg === 'signin') setTimeout(openSignIn, 50);
+      }
+      first = false; pendingSetupMsg = '';
+    });
+  }
+
+  function fallbackOffline() {
+    const raw = lsGet(CACHE_KEY);
+    if (raw) {
+      try {
+        const d = JSON.parse(raw);
+        S.settings = d.settings || {}; S.items = d.items || {}; S.txns = d.txns || {};
+        MODE = 'cache'; syncChip(); changed();
+        toast('Offline. Showing your last synced budget. Changes are paused until you reconnect.');
+        return;
+      } catch (e) { /* fall through */ }
+    }
+    Store.offline = true;
+    startLocal();
+    toast('Could not reach sync. Showing what is saved on this device.');
+  }
+
+  function startLocal() {
+    MODE = 'local';
+    S.settings = {}; S.items = {}; S.txns = {};
+    const raw = lsGet(LS_KEY);
+    if (raw) { try { const d = JSON.parse(raw); S.settings = d.settings || {}; S.items = d.items || {}; S.txns = d.txns || {}; } catch (e) { /* ignore */ } }
+    syncChip(); changed();
+  }
+  let lsTimer = null;
+  function persistLocal() {
+    clearTimeout(lsTimer);
+    lsTimer = setTimeout(() => {
+      lsTimer = null;
+      if (!lsSet(LS_KEY, JSON.stringify({ settings: S.settings, items: S.items, txns: S.txns }))) toast('This browser would not save your changes. Export a backup from Settings.');
+    }, 200);
+  }
+  let cacheTimer = null;
+  const writeCache = () => { cacheTimer = null; lsSet(CACHE_KEY, JSON.stringify({ settings: S.settings, items: S.items, txns: S.txns })); };
+  function persistCache() { clearTimeout(cacheTimer); cacheTimer = setTimeout(writeCache, 1000); }
+  // Phones can close a backgrounded app at any moment, so save right away when the app is hidden.
+  function flushSaves() {
+    if (lsTimer) { clearTimeout(lsTimer); lsTimer = null; if (MODE === 'local') lsSet(LS_KEY, JSON.stringify({ settings: S.settings, items: S.items, txns: S.txns })); }
+    if (cacheTimer) { clearTimeout(cacheTimer); if (MODE === 'sync') writeCache(); }
+  }
+  window.addEventListener('pagehide', flushSaves);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSaves(); });
+
+  function startSync(uid) {
+    stopSync();
+    MODE = 'sync';
+    Store.loaded = { s: false, i: false, m: false }; Store.migrated = false; Store.failed = false; Store.offline = false;
+    S.settings = {}; S.items = {}; S.txns = {};
+    const F = FBX.F;
+    const base = F.doc(FBX.db, 'users', uid);
+    Store.refs = { base, items: F.collection(base, 'items'), months: F.collection(base, 'months') };
+    const onErr = e => {
+      Store.failed = true; Store.loaded = { s: true, i: true, m: true };
+      syncChip(); changed();
+      toast(e && e.code === 'permission-denied' ? 'Sync was refused. Check the Firestore rules in your Firebase project (Settings, Sync).' : 'Sync stopped. Close and reopen the app to reconnect.');
+    };
+    unsubs.push(F.onSnapshot(base, s => {
+      S.settings = s.exists() ? clone(s.data()) || {} : {};
+      Store.loaded.s = true; afterSnap();
+    }, onErr));
+    unsubs.push(F.onSnapshot(Store.refs.items, qs => {
+      const o = {};
+      qs.forEach(d => { o[d.id] = Object.assign(clone(d.data()), { id: d.id }); });
+      S.items = o; Store.loaded.i = true; afterSnap();
+    }, onErr));
+    unsubs.push(F.onSnapshot(Store.refs.months, qs => {
+      const o = {};
+      qs.forEach(d => { const t = (d.data() || {}).t || {}; for (const k in t) if (t[k] && t[k].date) o[k] = Object.assign(clone(t[k]), { id: k }); });
+      S.txns = o; Store.loaded.m = true; afterSnap();
+    }, onErr));
+    syncChip(); changed();
+  }
+  function stopSync() { for (const u of unsubs) { try { u(); } catch (e) { /* ignore */ } } unsubs = []; Store.refs = null; }
+  function afterSnap() {
+    if (isReady()) {
+      if (!Store.migrated) { Store.migrated = true; maybeMigrate(); }
+      persistCache();
+    }
+    syncChip(); changed();
+  }
+  function maybeMigrate() {
+    const empty = !S.settings.anchor && !Object.keys(S.items).length && !Object.keys(S.txns).length;
+    const raw = lsGet(LS_KEY);
+    if (!empty || !raw) return;
+    let d; try { d = JSON.parse(raw); } catch (e) { return; }
+    if (!d || !((d.settings && d.settings.anchor) || (d.items && Object.keys(d.items).length))) return;
+    replaceAll(d).then(() => { lsDel(LS_KEY); toast('Moved the budget saved on this device into your synced account.'); });
+  }
+
+  function canWrite() {
+    if (MODE === 'cache') { toast('You are offline. Reconnect to make changes.'); return false; }
+    return MODE === 'local' || MODE === 'sync';
+  }
+  function writeFail(e) {
+    const c = e && e.code;
+    if (c === 'permission-denied') toast('Sync refused that change. Check the Firestore rules in your Firebase project.');
+    else if (c === 'resource-exhausted') toast('Your free Firebase quota is used up for today. Changes will sync tomorrow.');
+    else if (c === 'unauthenticated') toast('You were signed out. Sign in again from Settings.');
+    else toast('Could not save that change. Check your connection.');
+  }
+  function enqueue(fn) {
+    Store.pending++; syncChip();
+    let p;
+    try { p = Promise.resolve(fn()); } catch (e) { p = Promise.reject(e); }
+    return p.catch(writeFail).finally(() => { Store.pending--; syncChip(); });
+  }
+  function toFs(v) {
+    const F = FBX.F;
+    if (v === null) return F.deleteField();
+    if (v && typeof v === 'object' && !Array.isArray(v)) { const r = {}; for (const k in v) r[k] = toFs(v[k]); return r; }
+    return v;
+  }
+  function deepMerge(a, b) {
+    for (const k in b) {
+      const v = b[k];
+      if (v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) a[k] = deepMerge(a[k], v);
+      else a[k] = clone(v);
+    }
+    return a;
+  }
+  function saveSettings(patch) {
+    if (!canWrite()) return;
+    S.settings = deepMerge(clone(S.settings) || {}, patch);
+    changed();
+    if (MODE !== 'sync') return persistLocal();
+    const R = Store.refs, F = FBX.F;
+    enqueue(() => F.setDoc(R.base, toFs(clone(patch)), { merge: true }));
+  }
+  function saveItem(it) {
+    if (!canWrite()) return;
+    it = clone(it); S.items[it.id] = it; changed();
+    if (MODE !== 'sync') return persistLocal();
+    const R = Store.refs, F = FBX.F;
+    enqueue(() => F.setDoc(F.doc(R.items, it.id), prune(it)));
+  }
+  function deleteItem(id) {
+    if (!canWrite()) return;
+    delete S.items[id]; changed();
+    if (MODE !== 'sync') return persistLocal();
+    const R = Store.refs, F = FBX.F;
+    enqueue(() => F.deleteDoc(F.doc(R.items, id)));
+  }
+  function saveTxns(list, removed) {
+    if (!canWrite()) return;
+    const byMonth = new Map();
+    const put = (m, id, v) => { if (!byMonth.has(m)) byMonth.set(m, {}); byMonth.get(m)[id] = v; };
+    for (const t of removed || []) { const old = S.txns[t.id]; delete S.txns[t.id]; if (old) put(old.date.slice(0, 7), t.id, null); }
+    for (const t0 of list || []) {
+      const t = clone(t0);
+      const old = S.txns[t.id];
+      if (old && old.date.slice(0, 7) !== t.date.slice(0, 7)) put(old.date.slice(0, 7), t.id, null);
+      S.txns[t.id] = t; put(t.date.slice(0, 7), t.id, t);
+    }
+    changed();
+    if (MODE !== 'sync') return persistLocal();
+    const R = Store.refs, F = FBX.F;
+    for (const [m, map] of byMonth) {
+      const body = {};
+      for (const k in map) body[k] = map[k] === null ? null : prune(map[k]);
+      enqueue(() => F.setDoc(F.doc(R.months, m), { t: toFs(body) }, { merge: true }));
+    }
+  }
+
+  async function replaceAll(d) {
+    if (!canWrite()) return;
+    const settings = clone(d.settings || {}), its = {}, txns = {};
+    const okId = s => typeof s === 'string' && /^[A-Za-z0-9_\-~:@+]{1,120}$/.test(s);
+    for (const k in d.items || {}) { const it = d.items[k]; if (it && okId(it.id || k)) its[it.id || k] = Object.assign(clone(it), { id: it.id || k }); }
+    for (const k in d.txns || {}) { const t = d.txns[k]; if (t && t.date && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && isFinite(+t.amount)) txns[t.id || k] = Object.assign(clone(t), { id: t.id || k }); }
+    const oldItems = Object.keys(S.items);
+    const oldMonths = [...new Set(Object.values(S.txns).map(t => t.date.slice(0, 7)))];
+    S.settings = settings; S.items = its; S.txns = txns; changed();
+    if (MODE !== 'sync') { persistLocal(); return; }
+    const R = Store.refs, F = FBX.F, jobs = [];
+    jobs.push(enqueue(() => F.setDoc(R.base, prune(settings))));
+    for (const id of oldItems) if (!its[id]) jobs.push(enqueue(() => F.deleteDoc(F.doc(R.items, id))));
+    for (const id in its) jobs.push(enqueue(() => F.setDoc(F.doc(R.items, id), prune(its[id]))));
+    const months = {};
+    for (const id in txns) { const m = txns[id].date.slice(0, 7); (months[m] = months[m] || {})[id] = txns[id]; }
+    for (const m of oldMonths) if (!months[m]) jobs.push(enqueue(() => F.deleteDoc(F.doc(R.months, m))));
+    for (const m in months) jobs.push(enqueue(() => F.setDoc(F.doc(R.months, m), { t: prune(months[m]) })));
+    await Promise.all(jobs);
+  }
+
+  // ----- account actions -----
+  function authMsg(e) {
+    const c = (e && e.code) || '';
+    if (/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c)) return 'That email and password do not match. Try again, or reset your password.';
+    if (/email-already-in-use/.test(c)) return 'That email already has an account. Tap Sign in instead.';
+    if (/weak-password/.test(c)) return 'Use a password with at least 6 characters.';
+    if (/invalid-email/.test(c)) return 'That email address does not look right.';
+    if (/missing-password/.test(c)) return 'Enter your password.';
+    if (/network-request-failed/.test(c)) return 'No connection. Check your internet and try again.';
+    if (/too-many-requests/.test(c)) return 'Too many tries. Wait a few minutes, then try again.';
+    if (/operation-not-allowed|configuration-not-found/.test(c)) return 'Email sign-in is not turned on in your Firebase project. Open Authentication, Sign-in method, and enable Email/Password.';
+    if (/unauthorized-domain|requests-from-referer/.test(c)) return 'Firebase does not allow this web address yet. Add ' + location.hostname + ' under Authentication, Settings, Authorized domains.';
+    if (/api-key-not-valid|invalid-api-key/.test(c)) return 'The Firebase setup code has a wrong apiKey. Remove sync setup in Settings and paste it again.';
+    return 'Something went wrong (' + (c || 'unknown') + '). Try again.';
+  }
+
+  function setOv(it, rawKey, val) {
+    const n = clone(it); n.ov = n.ov || {};
+    if (val) n.ov[rawKey] = val; else delete n.ov[rawKey];
+    saveItem(n);
+  }
+
+  // ---------------- chrome ----------------
+  function syncChip() {
+    for (const id of ['sync1', 'sync2']) {
+      const el = document.getElementById(id); if (!el) continue;
+      let cls = '', txt = 'Loading';
+      const online = navigator.onLine !== false;
+      if (MODE === 'sync') {
+        if (Store.failed) { cls = 'local'; txt = 'Sync stopped'; }
+        else if (!online) { cls = 'busy'; txt = Store.pending ? 'Offline, will sync' : 'Offline'; }
+        else if (Store.pending) { cls = 'busy'; txt = 'Saving…'; }
+        else { cls = 'ok'; txt = 'Synced'; }
+      } else if (MODE === 'local') { cls = 'local'; txt = Store.offline ? 'Offline' : getCfg() ? 'Signed out' : 'This device only'; }
+      else if (MODE === 'cache') { cls = 'local'; txt = 'Offline, view only'; }
+      el.className = 'chip-sync ' + cls;
+      el.querySelector('.lbl').textContent = txt;
+      el.title = MODE === 'sync' ? 'Synced with your Firebase account. Changes made offline upload when you reconnect.' : MODE === 'local' ? 'Saved on this device only. Set up sync in Settings to share it with your other devices.' : '';
+    }
+  }
+  function renderTabs() {
+    const html = TABS.map(([k, l]) => `<button class="tab" data-act="tab" data-tab="${k}"${UI.tab === k ? ' aria-current="page"' : ''}>${svg(k)}<span>${l}</span></button>`).join('');
+    $('#tabbar').innerHTML = html;
+    $('#rail-tabs').innerHTML = html;
+  }
+
+  let rq = false, deferred = false;
+  function scheduleRender() {
+    if (rq) return;
+    rq = true;
+    const go = () => { if (!rq) return; rq = false; render(); };
+    requestAnimationFrame(go); setTimeout(go, 100);
+  }
+  function render() {
+    renderTabs(); syncChip();
+    const v = $('#view');
+    if (!isReady()) { v.innerHTML = '<div class="loading"><span class="spinner"></span>Opening your budget…</div>'; return; }
+    const ae = document.activeElement;
+    if (ae && v.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) { deferred = true; return; }
+    deferred = false;
+    const fn = { cal: viewCal, pay: viewPay, sched: viewSched, act: viewAct, set: viewSet }[UI.tab] || viewCal;
+    v.innerHTML = fn();
+  }
+
+  function exBanner() {
+    if (!items().some(i => i.example)) return '';
+    return `<div class="banner"><span><strong>Example budget.</strong> Sample numbers so you can look around. Remove them when you are ready to enter your own.</span><button class="btn sm" data-act="rm-examples">Remove examples</button></div>`;
+  }
+
+  // ---------------- Calendar ----------------
+  function viewCal() {
+    const T = P.todayN();
+    if (!UI.ym) { const a = P.ymd(T); UI.ym = { y: a.y, m: a.m }; }
+    if (UI.sel == null) UI.sel = T;
+    const L = ledger();
+    return exBanner() + setupCard(L) + summary(L) +
+      `<div class="cal-layout"><section class="card cal-card" aria-label="Calendar">${monthGrid(L)}</section><aside class="card day-panel" id="day-panel">${dayPanel(L, UI.sel)}</aside></div>`;
+  }
+
+  function setupCard(L) {
+    const its = items();
+    const hasBal = L.A.set, hasPay = its.some(i => i.kind === 'income' && i.paycheck), hasMore = its.some(i => i.kind !== 'income');
+    if (hasBal && hasPay && hasMore) return '';
+    const step = (n, done, t, d, act) => `<button class="step${done ? ' done' : ''}" data-act="${act}"><span class="n">${done ? '✓' : n}</span><span><span class="t">${t}</span><br><span class="d">${d}</span></span></button>`;
+    return `<section class="card setup"><div><div class="eyebrow">Get set up</div><h2>Three steps to see every payday ahead</h2></div><div class="steps">
+      ${step(1, hasBal, 'Enter your bank balance', 'What is in checking right now?', 'balance')}
+      ${step(2, hasPay, 'Add your paycheck', 'Amount, how often, and your next payday', 'add-pay')}
+      ${step(3, hasMore, 'Add bills and spending', 'Rent, a payment every 10 days, groceries each week', 'add-item')}
+    </div>${!getCfg() && MODE === 'local' ? '<div class="row"><span class="muted" style="font-size:var(--t-sm)">Using a phone and a computer? Set up sync first so both show the same budget.</span><button class="btn sm" data-act="setup-sync">Set up sync</button></div>' : ''}${its.length ? '' : '<div class="row"><span class="muted" style="font-size:var(--t-sm)">Want to look around first?</span><button class="btn sm" data-act="examples">Load an example budget</button></div>'}</section>`;
+  }
+
+  function summary(L) {
+    const T = L.today, A = L.A;
+    const now = T >= A.date ? L.balAt(T) : A.balance;
+    const age = T - A.date;
+    const lbl = !A.set ? 'Balance today' : A.date === T ? 'Balance today' : 'Projected balance today';
+    const meta = A.set ? `Bank said ${fm(A.balance)} on ${fdS(A.date)}` : 'Starting from $0 until you enter your bank balance';
+    const stale = A.set && age > 7 ? `<span class="pill warn">${age} days old</span>` : '';
+    const lw = L.lowest(T, T + 60);
+    const lowCls = lw && lw.bal < 0 ? 'out' : lw && lw.bal < lowMark() ? 'warn' : 'in';
+    const pays = P.payDates(L).filter(d => d >= T);
+    let payStub = `<button class="stub" data-act="add-pay"><span class="eyebrow">Next payday</span><span class="v muted">—</span><span class="s">Add your paycheck</span></button>`;
+    if (pays.length) {
+      const d = pays[0];
+      const amt = L.occsIn(d, d).filter(o => o.item.kind === 'income' && o.status !== 'skipped').reduce((a, o) => a + (o.status === 'paid' ? Math.abs(o.actual) : o.planned), 0);
+      const days = d - T;
+      payStub = `<button class="stub" data-act="goto" data-d="${d}"><span class="eyebrow">Next payday</span><span class="v in">${fmS(amt)}</span><span class="s">${d === T ? 'Today' : fdW(d) + ' · in ' + days + (days === 1 ? ' day' : ' days')}</span></button>`;
+    }
+    return `<section class="card summary">
+      <div class="sum-main"><div class="eyebrow">${lbl}</div><div class="big${now < 0 ? ' neg' : ''}">${fm(now)}</div>
+        <div class="meta"><span>${meta}</span>${stale}<button class="btn ghost sm" data-act="balance">Update</button></div></div>
+      <div class="sum-row">
+        <button class="stub" data-act="goto" data-d="${lw ? lw.date : T}"><span class="eyebrow">Lowest, next 60 days</span><span class="v ${lowCls}">${lw ? fm(lw.bal) : '—'}</span><span class="s">${lw ? fdW(lw.date) : ''}</span></button>
+        ${payStub}
+      </div></section>`;
+  }
+
+  function monthGrid(L) {
+    const { y, m } = UI.ym, T = L.today;
+    const first = P.fromYMD(y, m, 1), D = P.dim(y, m), ws = weekStart();
+    const lead = (P.wday(first) - ws + 7) % 7;
+    const marks = new Map();
+    const mark = (d, k) => { if (!marks.has(d)) marks.set(d, new Set()); marks.get(d).add(k); };
+    for (const o of L.occsIn(first, first + D - 1)) if (o.status !== 'skipped') mark(o.date, barOf(o.item.kind));
+    for (const t of L.txns) { const d = P.dn(t.date); if (d >= first && d < first + D && !t.match) mark(d, 'tx'); }
+    const lw = lowMark();
+    let cells = '';
+    for (let i = 0; i < lead; i++) cells += '<div class="cell blank" aria-hidden="true"></div>';
+    for (let d = 1; d <= D; d++) {
+      const n = first + d - 1;
+      const b = n >= L.A.date ? L.balAt(n) : null;
+      const cls = ['cell'];
+      if (n < T) cls.push('past');
+      if (n === T) cls.push('today');
+      if (n === UI.sel) cls.push('sel');
+      if (b != null && b < 0) cls.push('neg'); else if (b != null && b < lw) cls.push('low');
+      const mk = marks.get(n);
+      const dots = mk ? ['in', 'out', 'sp', 'tx'].filter(k => mk.has(k)).map(k => `<i class="dot ${k}"></i>`).join('') : '';
+      cells += `<button class="${cls.join(' ')}" data-act="day" data-d="${n}" aria-label="${fdL(n)}${b != null ? ', balance ' + fm(b) : ''}"><span class="dn">${d}</span><span class="dots">${dots}</span><span class="cb">${b != null ? fmC(b) : ''}</span></button>`;
+    }
+    const tail = (7 - ((lead + D) % 7)) % 7;
+    for (let i = 0; i < tail; i++) cells += '<div class="cell blank" aria-hidden="true"></div>';
+    const wk = Array.from({ length: 7 }, (_, i) => `<span>${WDS[(i + ws) % 7].slice(0, 2)}</span>`).join('');
+    return `<div class="cal-head"><h2>${P.MO[m - 1]} ${y}</h2>
+      <button class="btn sm" data-act="today">Today</button>
+      <button class="iconbtn" data-act="mprev" aria-label="Previous month">${svg('left')}</button>
+      <button class="iconbtn" data-act="mnext" aria-label="Next month">${svg('right')}</button></div>
+      <div class="wk">${wk}</div><div class="grid">${cells}</div>
+      <div class="legend"><span><i class="dot in"></i>Money in</span><span><i class="dot out"></i>Bill</span><span><i class="dot sp"></i>Spending budget</span><span><i class="dot tx"></i>Logged</span><span><i class="sw low"></i>Under ${fm(lw)}</span><span><i class="sw neg"></i>Below $0</span></div>`;
+  }
+
+  function dayPanel(L, d) {
+    const e = L.dayEntries(d);
+    const b = d >= L.A.date ? L.balAt(d) : null;
+    let rows = '';
+    for (const o of e.occs) rows += occRow(o, L, d, false);
+    for (const t of e.txns) rows += txnRow(t, L, false);
+    const tag = d === L.today ? 'Today' : d < L.today ? 'Past' : 'Ahead';
+    const eod = b != null
+      ? `<div class="eod"><span class="muted">End-of-day balance</span><span class="v ${b < 0 ? 'out' : b < lowMark() ? 'warn' : ''}">${fm(b)}</span></div>`
+      : `<div class="eod"><span class="muted">Before your balance date (${fdS(L.A.date)})</span><span></span></div>`;
+    return `<div class="eyebrow">${tag}</div><h3>${fdL(d)}</h3>${eod}` +
+      (rows ? `<div class="reg">${rows}</div>` : '<p class="note">Nothing scheduled or logged on this day.</p>') +
+      `<div class="panel-acts"><button class="btn primary" data-act="add-txn" data-d="${d}">${svg('plus')}Log spending</button><button class="btn" data-act="add-item" data-d="${d}">Schedule something</button></div>`;
+  }
+
+  function occRow(o, L, viewDay, showDate) {
+    const it = o.item, k = it.kind;
+    const meta = [];
+    let amt, cls = '';
+    if (showDate) meta.push(`<span>${fdW(o.date)}</span>`);
+    if (k === 'spend') {
+      if (o.reserve && o.countDate === viewDay && o.date !== viewDay) {
+        meta.push(`<span>Rest of the ${fdS(o.date)} budget</span>`);
+        amt = -o.reserve;
+      } else {
+        if (o.status !== 'skipped') meta.push(`<span>Spent ${fm(o.spent || 0)} of ${fm(o.planned)}</span>`);
+        if (o.over) meta.push(`<span class="pill out">Over ${fm(o.over)}</span>`);
+        amt = -o.planned;
+        if (o.status === 'past' || (o.status === 'active' && !showDate)) cls = 'dim';
+      }
+    } else {
+      amt = o.sign * (o.status === 'paid' ? Math.abs(o.actual) : o.planned);
+      const word = k === 'income' ? 'received' : 'paid';
+      if (o.status === 'paid' && o.txn) meta.push(`<span class="pill in">${k === 'income' ? 'Received' : 'Paid'} ${fdS(P.dn(o.txn.date))}</span>`);
+      else if (o.status === 'due') meta.push(`<span class="pill warn">Not marked ${word}</span>`);
+      else if (o.status === 'past') meta.push('<span>Before balance date</span>');
+      if (o.status === 'past' || o.status === 'paid') cls = 'dim';
+    }
+    if (o.status === 'skipped') { cls = 'skip'; meta.push('<span class="pill">Skipped</span>'); }
+    if (o.moved) meta.push(`<span class="pill acc">Moved from ${fdS(P.adjust(o.raw, P.normRule(it.rule).weekend))}</span>`);
+    else if (o.shifted) meta.push(`<span>Weekend, moved from ${fdS(o.raw)}</span>`);
+    if (o.changed) meta.push('<span>Amount changed once</span>');
+    if (it.paycheck) meta.unshift('<span class="pill in">Payday</span>');
+    return `<button class="entry ${cls}" data-act="occ" data-key="${esc(o.key)}"><span class="bar ${barOf(k)}"></span><span style="min-width:0"><span class="nm" style="display:block">${esc(it.name)}</span><span class="mt">${meta.join('')}</span></span><span class="am${amt > 0 ? ' in' : ''}">${fmS(amt)}</span></button>`;
+  }
+
+  function txnRow(t, L, showDate) {
+    const it = t.item ? S.items[t.item] : null;
+    const meta = [];
+    if (showDate) meta.push(`<span>${fdW(P.dn(t.date))}</span>`);
+    meta.push(it ? `<span class="pill ${it.kind === 'income' ? 'in' : it.kind === 'bill' ? 'out' : 'acc'}">${esc(it.name)}</span>` : '<span class="pill">Uncategorized</span>');
+    if (t.match) {
+      const o = L.occs.find(x => x.key === t.match);
+      if (o) meta.push(`<span>${o.item.kind === 'income' ? 'Deposit for' : 'Pays the'} ${fdS(o.date)} ${o.item.kind === 'income' ? 'payday' : 'bill'}</span>`);
+    }
+    if (t.src === 'csv') meta.push('<span>From bank file</span>');
+    if (!showDate && P.dn(t.date) === L.A.date && !L.counted.has(t.id)) meta.push('<span>Already in your balance</span>');
+    const a = +t.amount;
+    return `<button class="entry" data-act="txn" data-id="${esc(t.id)}"><span class="bar ${a > 0 ? 'in' : ''}"></span><span style="min-width:0"><span class="nm" style="display:block">${esc(t.desc || (it ? it.name : 'Transaction'))}</span><span class="mt">${meta.join('')}</span></span><span class="am${a > 0 ? ' in' : ''}">${fmS(a)}</span></button>`;
+  }
+
+  // ---------------- Paychecks ----------------
+  function viewPay() {
+    const L = ledger(), T = L.today;
+    const pays = P.payDates(L);
+    const head = `<div class="page-head"><h1>Paycheck plan</h1><div class="acts"><button class="btn" data-act="add-item">${svg('plus')}Add bill or budget</button></div><p class="sub">Each paycheck covers the bills and spending due before the next one comes in. Tap a bill to pay it from a different paycheck or change it this one time.</p></div>`;
+    if (!pays.length) return exBanner() + head + '<div class="card empty"><h2>No paycheck yet</h2><p>Add your paycheck and how often it comes. Every payday starts a new pay period here.</p><button class="btn primary" data-act="add-pay">Add paycheck</button></div>';
+    let ci = -1;
+    for (let i = 0; i < pays.length; i++) if (pays[i] <= T) ci = i;
+    let pre = '';
+    if (ci < 0) { pre = periodCard(P.periodDetail(L, T, pays[0] - 1, pays[0]), L, { pre: true }); ci = 0; }
+    const from = Math.max(0, ci - (UI.showPast ? 4 : 0));
+    const to = Math.min(pays.length - 1, ci + 9);
+    let cards = '';
+    for (let i = from; i < to; i++) cards += periodCard(P.periodDetail(L, pays[i], pays[i + 1] - 1, pays[i + 1]), L, { cur: pays[i] <= T && pays[i + 1] > T });
+    const more = ci > 0 ? `<div class="row" style="margin-bottom:var(--s3)"><button class="btn sm" data-act="toggle-past">${UI.showPast ? 'Hide earlier paychecks' : 'Show earlier paychecks'}</button></div>` : '';
+    return exBanner() + head + more + `<div class="periods">${pre}${cards}</div>`;
+  }
+
+  function periodCard(p, L, opt) {
+    const T = L.today;
+    const title = opt.pre ? 'Before your next paycheck' : 'Paycheck ' + fdW(p.start);
+    const tag = opt.cur ? '<span class="pill acc">Now</span>' : opt.pre ? '<span class="pill acc">Now</span>' : p.end < T ? '<span class="pill">Done</span>' : '';
+    const sec = (label, list, total, sign) => list.length ? `<div class="p-sec"><div class="ttl"><span>${label}</span><span class="num">${fmS(sign * total)}</span></div>${list.map(o => occRow(o, L, o.date, true)).join('')}</div>` : '';
+    let body = sec('Coming in', p.inc, p.income, 1) + sec('Bills', p.bills, p.billTotal, -1) + sec('Spending budgets', p.spend, p.spendTotal, -1);
+    if (p.other.length) body += `<div class="p-sec"><div class="ttl"><span>Other logged</span><span class="num">${fmS(p.otherIn - p.otherOut)}</span></div><p class="note" style="padding:6px 0 0">${p.other.length} uncategorized ${p.other.length === 1 ? 'transaction' : 'transactions'}. They already count in the balances below.</p></div>`;
+    if (!body) body = '<p class="note">Nothing scheduled in this period.</p>';
+    let total;
+    if (opt.pre) total = `<div class="p-total"><span class="lbl">Due before payday</span><span class="v">${fm(p.billTotal + p.spendTotal)}</span></div>`;
+    else {
+      const lbl = p.left > 0.004 ? 'Left to budget' : p.left < -0.004 ? 'Over budget' : 'Every dollar has a job';
+      total = `<div class="p-total"><span class="lbl">${lbl}</span><span class="v ${p.left < -0.004 ? 'out' : p.left > 0.004 ? 'in' : ''}">${fm(Math.abs(p.left))}</span></div>`;
+      if (p.left < -0.004 && p.low) {
+        total += p.low.bal >= 0
+          ? `<p class="p-why">This paycheck alone does not cover it, but money already in the account does. Your balance stays at or above ${fm(p.low.bal)}.</p>`
+          : `<p class="p-why">Your balance would drop below $0 on ${fdS(p.low.date)}. Move a bill to another paycheck or trim a spending budget.</p>`;
+      } else if (p.left > 0.004) total += '<p class="p-why">Give these dollars a job: add savings, extra debt payments or giving to this paycheck.</p>';
+    }
+    const bc = v => (v == null ? '' : v < 0 ? 'neg' : v < lowMark() ? 'low' : '');
+    const bv = v => (v == null ? '—' : fm(v));
+    const startNow = p.balStart == null && p.start <= L.A.date && p.end >= L.A.date;
+    const sv = startNow ? L.A.balance : p.balStart;
+    const bal = `<div class="p-bal"><div>${startNow ? 'Now' : 'Starts'}<b class="${bc(sv)}">${bv(sv)}</b></div><div>Lowest${p.low ? ' ' + fdS(p.low.date) : ''}<b class="${bc(p.low && p.low.bal)}">${bv(p.low && p.low.bal)}</b></div><div>Ends<b class="${bc(p.balEnd)}">${bv(p.balEnd)}</b></div></div>`;
+    return `<article class="card period${opt.cur || opt.pre ? ' cur' : ''}"><div class="p-head"><div><h3>${title}</h3><div class="rng">${fdS(p.start)} – ${fdS(p.end)}</div></div>${tag}</div>${body}${total}${bal}</article>`;
+  }
+
+  // ---------------- Schedule ----------------
+  function viewSched() {
+    const T = P.todayN();
+    const its = items();
+    const pm = k => its.filter(i => i.kind === k).reduce((a, i) => a + P.perMonth(i.rule) * (+i.amount || 0), 0);
+    const inc = pm('income'), out = pm('bill') + pm('spend');
+    const head = `<div class="page-head"><h1>Schedule</h1><div class="acts"><button class="btn primary" data-act="add-item">${svg('plus')}Add</button></div><p class="sub">Everything that repeats, each on its own rhythm: every week, every 3 weeks, a set day of the month, the 2nd Tuesday, twice a month, yearly, or one time.</p></div>`;
+    const avg = its.length ? `<div class="card avg"><div><div class="eyebrow">In, per month</div><div class="v in">${fm(inc)}</div></div><div><div class="eyebrow">Out, per month</div><div class="v">${fm(out)}</div></div><div><div class="eyebrow">Difference</div><div class="v ${inc - out < 0 ? 'out' : 'in'}">${fmS(inc - out)}</div></div></div>` : '';
+    const sec = (k, title, hint, add) => {
+      const list = its.filter(i => i.kind === k).map(i => ({ i, nx: P.nextDates(i, T, 1)[0] })).sort((a, b) => (a.nx ? a.nx.date : 1e9) - (b.nx ? b.nx.date : 1e9) || a.i.name.localeCompare(b.i.name));
+      const rows = list.map(({ i, nx }) => {
+        const meta = [`<span>${esc(P.describe(i.rule))}</span>`, nx ? `<span>Next: ${nx.date === T ? 'today' : fdW(nx.date)}</span>` : '<span class="pill">Finished</span>'];
+        if (nx && i.rule.end && i.rule.type !== 'once') meta.push(`<span>Ends ${fdY(P.dn(i.rule.end))}</span>`);
+        if (i.paycheck) meta.unshift('<span class="pill in">Payday</span>');
+        const amt = (k === 'income' ? 1 : -1) * (+i.amount || 0);
+        return `<button class="entry${nx ? '' : ' dim'}" data-act="edit-item" data-id="${esc(i.id)}"><span class="bar ${barOf(k)}"></span><span style="min-width:0"><span class="nm" style="display:block">${esc(i.name)}</span><span class="mt">${meta.join('')}</span></span><span class="am${amt > 0 ? ' in' : ''}">${fmS(amt)}</span></button>`;
+      }).join('');
+      return `<section class="card"><h2><span>${title}</span><span class="num">${fm(pm(k))}<span class="muted" style="font-weight:400;font-size:var(--t-xs)"> /mo</span></span></h2>${rows || `<p class="hint">${hint}</p>`}<div class="row" style="padding:var(--s2) 0"><button class="btn ghost sm" data-act="add-item" data-kind="${k}">${svg('plus')}${add}</button></div></section>`;
+    };
+    return exBanner() + head + avg + `<div class="sched">${sec('income', 'Money in', 'Paychecks, side income, child support.', 'Add income')}${sec('bill', 'Bills', 'Rent, utilities, phone, car payment, savings transfers, giving.', 'Add bill')}${sec('spend', 'Spending budgets', 'Groceries, gas, eating out: money spent in many small purchases.', 'Add budget')}</div>`;
+  }
+
+  // ---------------- Activity ----------------
+  function viewAct() {
+    const L = ledger(), T = L.today;
+    if (!UI.actYM) { const a = P.ymd(T); UI.actYM = { y: a.y, m: a.m }; }
+    const { y, m } = UI.actYM;
+    const key = y + '-' + String(m).padStart(2, '0');
+    const list = L.txns.filter(t => t.date.slice(0, 7) === key).sort((a, b) => b.date.localeCompare(a.date) || (b.created || 0) - (a.created || 0));
+    const tin = list.reduce((a, t) => a + (+t.amount > 0 ? +t.amount : 0), 0);
+    const tout = list.reduce((a, t) => a + (+t.amount < 0 ? -t.amount : 0), 0);
+    const unc = list.filter(t => !t.item).length;
+    const head = `<div class="page-head"><h1>Activity</h1><div class="acts"><button class="btn" data-act="import">${svg('up')}Import bank file</button><button class="btn primary" data-act="add-txn">${svg('plus')}Log</button></div><p class="sub">What actually happened. Log purchases as you go, import your bank's CSV file, or both. Matching rows replace the planned amounts on your calendar.</p></div>`;
+    const bar = `<div class="mbar"><button class="iconbtn" data-act="aprev" aria-label="Previous month">${svg('left')}</button><h2>${P.MO[m - 1]} ${y}</h2><button class="iconbtn" data-act="anext" aria-label="Next month">${svg('right')}</button><div class="tot"><span class="in">In ${fm(tin)}</span><span>Out ${fm(tout)}</span></div></div>`;
+    if (!list.length) return exBanner() + head + bar + `<div class="card empty"><h2>Nothing logged in ${P.MO[m - 1]}</h2><p>Log a purchase, or import the CSV file from your bank's website. Purchases you assign to a spending budget come out of that budget.</p><div class="row" style="justify-content:center"><button class="btn primary" data-act="add-txn">Log a purchase</button><button class="btn" data-act="import">Import bank file</button></div></div>`;
+    let html = '', cur = '';
+    for (const t of list) {
+      if (t.date !== cur) { cur = t.date; html += `<div class="dhead">${fdW(P.dn(t.date))}</div>`; }
+      html += txnRow(t, L, false);
+    }
+    const uncNote = unc ? `<p class="note" style="padding-top:0">${unc} without a category. Tap one to assign it; Payday Ledger remembers the choice for future imports.</p>` : '';
+    return exBanner() + head + bar + uncNote + `<div class="card act-list">${html}</div>`;
+  }
+
+  // ---------------- Settings ----------------
+  function viewSet() {
+    const L = ledger(), A = L.A;
+    const rules = rulesMap();
+    const ruleRows = Object.keys(rules).sort().map(k => { const it = S.items[rules[k]]; return `<div class="r"><code>${esc(k)}</code><span>→ ${esc(it ? it.name : 'Deleted item')}</span><button class="btn sm" data-act="del-rule" data-k="${esc(k)}">Remove</button></div>`; }).join('');
+    const hasEx = items().some(i => i.example);
+    const cfg = getCfg();
+    let sync;
+    if (MODE === 'sync') sync = `<p>Signed in as <b>${esc(USER && USER.email)}</b>. Your budget syncs between your phone and computer through your own Firebase project. It also works offline and catches up when you reconnect.</p>
+        <div class="row"><button class="btn primary" data-act="connect-device">Add your phone or another device</button><button class="btn" data-act="sign-out">Sign out</button></div>`;
+    else if (MODE === 'cache') sync = '<p>You are offline, so this shows your last synced budget. Changes are paused until the app can reach Firebase again.</p><div class="row"><button class="btn" data-act="reload">Try again</button></div>';
+    else if (Store.offline) sync = '<p>The app could not reach sync, so it is showing what is saved on this device. Connect to the internet and try again.</p><div class="row"><button class="btn primary" data-act="reload">Try again</button></div>';
+    else if (cfg) sync = `<p>Sync is set up on this device, but you are signed out. Sign in to see your synced budget.</p>
+        <div class="row"><button class="btn primary" data-act="sign-in">Sign in</button><button class="btn" data-act="remove-sync">Remove sync setup</button></div>`;
+    else sync = `<p>Your budget is saved on this device only. Set up free sync to use the same budget on your phone and your computer.</p>
+        <div class="row"><button class="btn primary" data-act="setup-sync">Set up sync</button></div>`;
+    const standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+    const install = standalone ? '' : `<section class="card set-card"><h2>Install as an app</h2>
+        <p>On Android, open Chrome's ⋮ menu and tap <b>Add to Home screen</b> or <b>Install app</b>. On a computer, click the install icon at the right end of the address bar in Chrome or Edge.</p>
+        ${installEvt ? '<div class="row"><button class="btn primary" data-act="install">Install Payday Ledger</button></div>' : ''}</section>`;
+    return `<div class="page-head"><h1>Settings</h1></div><div class="set-grid">
+      <section class="card set-card"><h2>Sync</h2>${sync}</section>
+      ${install}
+      <section class="card set-card"><h2>Bank balance</h2>
+        <p>${A.set ? `${fm(A.balance)} as of ${fdY(A.date)}.` : 'Not set yet.'} The calendar figures every future day forward from this number. Update it whenever you check your bank so the projection stays exact.</p>
+        <div class="row"><button class="btn primary" data-act="balance">Update balance</button></div></section>
+      <section class="card set-card"><h2>Calendar</h2>
+        <div class="two"><div class="fld"><label for="set-low">Warn me when a day drops below</label><input class="inp money" id="set-low" inputmode="decimal" value="${lowMark().toFixed(2)}"></div>
+        <div class="fld"><label for="set-ws">Weeks start on</label><select class="inp" id="set-ws"><option value="0"${weekStart() === 0 ? ' selected' : ''}>Sunday</option><option value="1"${weekStart() === 1 ? ' selected' : ''}>Monday</option></select></div></div></section>
+      <section class="card set-card"><h2>Backup</h2><p>Save a copy of everything as a file, or bring one back. Handy before big changes.</p>
+        <div class="row"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="restore">Restore from backup</button></div></section>
+      <section class="card set-card"><h2>Automatic categories</h2>
+        <p>When you give a transaction a category, its description is remembered here. Future bank imports with the same description get that category on their own.</p>
+        ${ruleRows ? `<div class="rules">${ruleRows}</div>` : ''}</section>
+      <section class="card set-card"><h2>Example budget</h2><p>${hasEx ? 'Example items are loaded. Remove them to start clean; anything you added stays.' : 'Load sample bills, a paycheck and spending budgets to see how the app works.'}</p>
+        <div class="row">${hasEx ? '<button class="btn" data-act="rm-examples">Remove examples</button>' : '<button class="btn" data-act="examples">Load example budget</button>'}</div></section>
+      <section class="card set-card"><h2>Start over</h2><p>Erase your balance, schedule and every transaction. Export a backup first if you might want them back.</p>
+        <div class="row"><button class="btn danger" data-act="erase">Erase everything</button></div></section>
+    </div>`;
+  }
+
+  // ---------------- sheets ----------------
+  let sheetCleanup = null;
+  function openSheet(title, html, mount, wide) {
+    const sh = $('#sheet');
+    $('#sheet-title').textContent = title;
+    $('#sheet-body').innerHTML = html;
+    $('#sheet-panel').className = 'sheet-panel' + (wide ? ' wide' : '');
+    sh.hidden = false; document.body.classList.add('noscroll');
+    $('#sheet-panel').scrollTop = 0;
+    if (mount) mount($('#sheet-body'));
+    setTimeout(() => { try { $('#sheet-panel').focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 0);
+  }
+  function closeSheet() {
+    $('#sheet').hidden = true; $('#sheet-body').innerHTML = ''; document.body.classList.remove('noscroll');
+    if (sheetCleanup) { sheetCleanup(); sheetCleanup = null; }
+    if (deferred) render();
+  }
+  const showErr = (id, msg) => { const e = $(id); if (!e) return; e.textContent = msg; e.hidden = !msg; };
+
+  function confirmSheet(title, text, label, fn) {
+    openSheet(title, `<div class="form"><p style="margin:0">${text}</p><div class="sheet-acts"><button type="button" class="btn push" data-act="close">Cancel</button><button type="button" class="btn danger" id="cf-ok">${esc(label)}</button></div></div>`, () => {
+      $('#cf-ok').addEventListener('click', () => { closeSheet(); fn(); });
+    });
+  }
+
+  // ----- schedule item -----
+  const FREQS = [['once', 'One time'], ['w1', 'Every week'], ['w2', 'Every 2 weeks'], ['w3', 'Every 3 weeks'], ['wN', 'Every X weeks (pick the number)'], ['dN', 'Every X days (like every 10 days)'], ['mDay', 'Monthly, on a date'], ['m2x', 'Twice a month'], ['mWk', 'Monthly, on a weekday (2nd Tuesday…)'], ['yearly', 'Yearly']];
+  function ruleToFreq(r) {
+    r = P.normRule(r);
+    switch (r.type) {
+      case 'once': return 'once';
+      case 'weeks': return r.every === 1 ? 'w1' : r.every === 2 ? 'w2' : r.every === 3 ? 'w3' : 'wN';
+      case 'days': return 'dN';
+      case 'twiceMonthly': return 'm2x';
+      case 'monthlyWeekday': return 'mWk';
+      case 'yearly': return 'yearly';
+      default: return 'mDay';
+    }
+  }
+  const KH = {
+    income: 'A paycheck or any other money coming in.',
+    bill: 'A set amount paid once each time: rent, phone, car payment, a haircut, a savings transfer.',
+    spend: 'Money spent in many small purchases, like groceries or gas. Purchases you log under it come out of this amount instead of adding to it.'
+  };
+
+  function openItem(item, preset) {
+    preset = preset || {};
+    const T = P.todayN(), isNew = !item;
+    const it = item ? clone(item) : { id: newId(), kind: preset.kind || 'bill', name: preset.name || '', amount: '', paycheck: !!preset.paycheck, created: Date.now(), rule: { type: 'monthly', start: P.ds(preset.start != null ? preset.start : T) } };
+    if (isNew && preset.freq === 'w2') it.rule = { type: 'weeks', every: 2, start: it.rule.start };
+    if (isNew && preset.kind === 'spend') it.rule = { type: 'weeks', every: 1, start: it.rule.start };
+    const r = P.normRule(it.rule);
+    const freq = ruleToFreq(r);
+    const st = P.dn(r.start), sy = P.ymd(st);
+    const day = r.day != null && r.day !== '' ? +r.day : sy.d;
+    const nth = r.nth != null ? +r.nth : (sy.d > 28 ? -1 : Math.ceil(sy.d / 7));
+    const wd = r.weekday != null ? +r.weekday : P.wday(st);
+    const days = r.days || [1, 15];
+    const dayOpts = sel => `<option value="0"${sel === 0 ? ' selected' : ''}>Last day of the month</option>` + Array.from({ length: 31 }, (_, i) => i + 1).map(i => `<option value="${i}"${sel === i ? ' selected' : ''}>${P.ord(i)}</option>`).join('');
+    const html = `<form class="form" id="f-item" novalidate>
+      <div class="segm" role="radiogroup" aria-label="Type">${['income', 'bill', 'spend'].map(v => `<input type="radio" name="kind" id="k-${v}" value="${v}"${it.kind === v ? ' checked' : ''}><label for="k-${v}">${KIND_LABEL[v]}</label>`).join('')}</div>
+      <p class="hint muted" id="kind-hint" style="margin:-8px 0 0;font-size:var(--t-xs)"></p>
+      <div class="two"><div class="fld"><label for="f-name">Name</label><input class="inp" id="f-name" autocomplete="off" value="${esc(it.name)}" placeholder="Rent"></div>
+        <div class="fld"><label for="f-amt">Amount</label><input class="inp money" id="f-amt" inputmode="decimal" autocomplete="off" value="${it.amount === '' ? '' : (+it.amount).toFixed(2)}" placeholder="0.00"></div></div>
+      <div class="fld"><label for="f-freq">How often</label><select class="inp" id="f-freq">${FREQS.map(([v, l]) => `<option value="${v}"${v === freq ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="fld" id="w-every"><label for="f-every">Repeat every</label><div class="inline"><input class="inp" id="f-every" type="number" min="1" max="999" inputmode="numeric" value="${r.every}"><span id="every-unit" class="muted">weeks</span></div></div>
+      <div class="fld" id="w-mday"><label for="f-mday">Day of the month</label><select class="inp" id="f-mday">${dayOpts(day)}</select><span class="hint">In shorter months it lands on the last day.</span></div>
+      <div class="two" id="w-m2x"><div class="fld"><label for="f-d1">First day</label><select class="inp" id="f-d1">${dayOpts(+days[0])}</select></div><div class="fld"><label for="f-d2">Second day</label><select class="inp" id="f-d2">${dayOpts(+days[1])}</select></div></div>
+      <div class="two" id="w-mwk"><div class="fld"><label for="f-nth">Which one</label><select class="inp" id="f-nth">${[[1, '1st'], [2, '2nd'], [3, '3rd'], [4, '4th'], [-1, 'Last']].map(([v, l]) => `<option value="${v}"${v === nth ? ' selected' : ''}>${l}</option>`).join('')}</select></div><div class="fld"><label for="f-wd">Weekday</label><select class="inp" id="f-wd">${P.WD.map((w, i) => `<option value="${i}"${i === wd ? ' selected' : ''}>${w}</option>`).join('')}</select></div></div>
+      <div class="fld"><label for="f-start" id="start-lbl">Next date</label><input class="inp" type="date" id="f-start" value="${esc(r.start)}"><span class="hint" id="start-hint"></span></div>
+      <div class="fld" id="w-weekend"><label for="f-wkend">If it lands on a weekend</label><select class="inp" id="f-wkend">${[['none', 'Keep the date'], ['before', 'Move to the Friday before'], ['after', 'Move to the Monday after'], ['nearest', 'Move to the nearest weekday']].map(([v, l]) => `<option value="${v}"${v === r.weekend ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <label class="check" id="w-hasend"><input type="checkbox" id="f-hasend"${r.end ? ' checked' : ''}><span>It stops after a certain date</span></label>
+      <div class="fld" id="w-end"><label for="f-end">Last date</label><input class="inp" type="date" id="f-end" value="${esc(r.end || '')}"></div>
+      <label class="check" id="w-pay"><input type="checkbox" id="f-pay"${it.paycheck ? ' checked' : ''}><span><b>This is a paycheck.</b> Each date starts a new pay period on the Paychecks page.</span></label>
+      ${!isNew ? `<div class="box"><label class="check"><input type="checkbox" id="f-fromon"><span>Only change dates from a certain day on, and keep earlier ones as they were (for example, rent goes up in January)</span></label><div class="fld" id="w-from" hidden><label for="f-from">Starting</label><input class="inp" type="date" id="f-from" value="${P.ds(T)}"></div></div>` : ''}
+      <div class="preview" id="f-prev"></div>
+      <p class="err" id="f-err" hidden></p>
+      <div class="sheet-acts" id="f-acts">${!isNew ? '<button type="button" class="btn danger" id="f-del">Delete</button>' : ''}<button type="button" class="btn push" data-act="close">Cancel</button><button type="submit" class="btn primary">${isNew ? 'Add' : 'Save'}</button></div>
+    </form>`;
+    openSheet(isNew ? 'Add to schedule' : 'Edit ' + it.name, html, () => {
+      const f = $('#f-item');
+      let dayTouched = !isNew, lastFreq = freq;
+      const kind = () => f.querySelector('input[name=kind]:checked').value;
+      function read() {
+        const k = kind(), name = $('#f-name').value.trim(), amount = P.parseAmount($('#f-amt').value);
+        const fq = $('#f-freq').value, start = $('#f-start').value, every = Math.floor(+$('#f-every').value);
+        const rule = { start, weekend: $('#f-wkend').value };
+        switch (fq) {
+          case 'once': rule.type = 'once'; break;
+          case 'w1': case 'w2': case 'w3': rule.type = 'weeks'; rule.every = +fq[1]; break;
+          case 'wN': rule.type = 'weeks'; rule.every = every; break;
+          case 'dN': rule.type = 'days'; rule.every = every; break;
+          case 'mDay': rule.type = 'monthly'; rule.day = +$('#f-mday').value; rule.every = every; break;
+          case 'm2x': rule.type = 'twiceMonthly'; rule.days = [+$('#f-d1').value, +$('#f-d2').value]; break;
+          case 'mWk': rule.type = 'monthlyWeekday'; rule.nth = +$('#f-nth').value; rule.weekday = +$('#f-wd').value; rule.every = every; break;
+          case 'yearly': rule.type = 'yearly'; rule.every = every; break;
+        }
+        if (fq !== 'once' && $('#f-hasend').checked && $('#f-end').value) rule.end = $('#f-end').value;
+        let error = '';
+        if (!start || !isFinite(P.dn(start))) error = 'Pick a date.';
+        else if (['wN', 'dN', 'mDay', 'mWk', 'yearly'].includes(fq) && !(every >= 1 && every <= 999)) error = 'Enter how many to repeat every, like 3.';
+        else if (rule.end && P.dn(rule.end) < P.dn(start)) error = 'The last date is before the first date.';
+        else if (fq === 'm2x' && rule.days[0] === rule.days[1]) error = 'Pick two different days.';
+        const out = Object.assign({}, it, { kind: k, name, amount: isFinite(amount) ? P.round2(Math.abs(amount)) : '', rule, paycheck: k === 'income' && $('#f-pay').checked });
+        delete out.example;
+        return { item: out, error, nameErr: !name ? 'Give it a name.' : '', amtErr: !(amount > 0) && !(amount < 0) ? 'Enter an amount, like 125.00.' : '' };
+      }
+      function sync() {
+        const k = kind(), fq = $('#f-freq').value;
+        $('#kind-hint').textContent = KH[k];
+        $('#w-pay').hidden = k !== 'income';
+        if (fq !== lastFreq) {
+          const ev = $('#f-every');
+          if (fq === 'wN' && +ev.value < 2) ev.value = 4;
+          else if (fq === 'dN' && +ev.value < 2) ev.value = 10;
+          else if (['mDay', 'mWk', 'yearly'].includes(fq) && !['mDay', 'mWk', 'yearly'].includes(lastFreq)) ev.value = 1;
+          lastFreq = fq;
+        }
+        $('#w-every').hidden = !['wN', 'dN', 'mDay', 'mWk', 'yearly'].includes(fq);
+        $('#every-unit').textContent = { wN: 'weeks', dN: 'days', mDay: 'months', mWk: 'months', yearly: 'years' }[fq] || '';
+        $('#w-mday').hidden = fq !== 'mDay'; $('#w-m2x').hidden = fq !== 'm2x'; $('#w-mwk').hidden = fq !== 'mWk';
+        $('#w-hasend').hidden = fq === 'once'; $('#w-end').hidden = fq === 'once' || !$('#f-hasend').checked;
+        if ($('#f-fromon')) $('#w-from').hidden = !$('#f-fromon').checked;
+        $('#start-lbl').textContent = fq === 'once' ? 'Date' : 'Next date (or any past date in the pattern)';
+        const sd = P.dn($('#f-start').value);
+        let h = '';
+        if (isFinite(sd)) {
+          if (/^w/.test(fq)) h = `Repeats on ${P.WD[P.wday(sd)]}s, counting from this date.`;
+          else if (fq === 'dN') h = 'Counts from this date.';
+          else if (fq === 'yearly') h = `Every ${P.MO[P.ymd(sd).m - 1]} ${P.ymd(sd).d}.`;
+          else if (fq !== 'once') h = 'Starts on or after this date.';
+        }
+        $('#start-hint').textContent = h;
+        const { item: tmp, error } = read();
+        const pv = $('#f-prev');
+        if (error || !isFinite(P.dn(tmp.rule.start))) { pv.innerHTML = '<span class="muted">Dates will show here.</span>'; return; }
+        const nx = P.nextDates(Object.assign({}, tmp, { ov: {} }), T, 6);
+        pv.innerHTML = nx.length ? `<b>${P.describe(tmp.rule)}</b><div class="dates">${nx.map(o => `<span>${fdW(o.date)}</span>`).join('')}</div>` : `<b>${P.describe(tmp.rule)}</b><div class="muted">No dates from today on.</div>`;
+      }
+      f.addEventListener('change', e => {
+        if (['f-mday', 'f-nth', 'f-wd'].includes(e.target.id)) dayTouched = true;
+        if (e.target.id === 'f-start' && !dayTouched) {
+          const sd = P.dn($('#f-start').value);
+          if (isFinite(sd)) { const a = P.ymd(sd); $('#f-mday').value = String(a.d); $('#f-nth').value = String(a.d > 28 ? -1 : Math.ceil(a.d / 7)); $('#f-wd').value = String(P.wday(sd)); }
+        }
+        sync();
+      });
+      f.addEventListener('input', sync);
+      sync();
+      if (!isNew) $('#f-del').addEventListener('click', () => {
+        $('#f-acts').innerHTML = `<span style="font-size:var(--t-sm)">Delete ${esc(it.name)}? Logged transactions stay but lose this category.</span><button type="button" class="btn push" id="f-nodel">Keep it</button><button type="button" class="btn danger" id="f-yesdel">Delete</button>`;
+        $('#f-nodel').addEventListener('click', () => { closeSheet(); openItem(item); });
+        $('#f-yesdel').addEventListener('click', () => {
+          deleteItem(it.id);
+          const rm = {}; const rs = rulesMap(); for (const k in rs) if (rs[k] === it.id) rm[k] = null;
+          if (Object.keys(rm).length) saveSettings({ rules: rm });
+          closeSheet(); toast(`Deleted ${it.name}.`);
+        });
+      });
+      f.addEventListener('submit', e => {
+        e.preventDefault();
+        const r2 = read();
+        const msg = r2.nameErr || r2.amtErr || r2.error;
+        if (msg) { showErr('#f-err', msg); return; }
+        if (!isNew && $('#f-fromon') && $('#f-fromon').checked) splitItem(item, r2.item, P.dn($('#f-from').value));
+        else saveItem(r2.item);
+        closeSheet(); toast(isNew ? `Added ${r2.item.name}.` : 'Saved.');
+      });
+    });
+  }
+
+  function splitItem(old, edited, from) {
+    if (!isFinite(from)) { saveItem(edited); return; }
+    const firstNew = P.rawDates(edited.rule, from, from + 1200)[0];
+    const oldStart = P.dn(P.normRule(old.rule).start);
+    if (firstNew == null || from <= oldStart) { saveItem(edited); return; }
+    const keep = clone(old);
+    keep.rule = Object.assign({}, old.rule, { end: P.ds(from - 1) });
+    if (old.rule.end && P.dn(old.rule.end) < from - 1) keep.rule.end = old.rule.end;
+    const nu = clone(edited); nu.id = newId(); nu.created = Date.now();
+    nu.rule = Object.assign({}, edited.rule, { start: P.ds(firstNew) });
+    keep.ov = {}; nu.ov = {};
+    for (const k in old.ov || {}) { if (P.dn(k) >= from) nu.ov[k] = old.ov[k]; else keep.ov[k] = old.ov[k]; }
+    keep.name = old.name;
+    saveItem(keep); saveItem(nu);
+    const moved = [];
+    for (const t of Object.values(S.txns)) {
+      if (t.match && t.match.indexOf(old.id + '|') === 0 && P.dn(t.match.split('|')[1]) >= from) moved.push(Object.assign({}, t, { match: nu.id + '|' + t.match.split('|')[1], item: nu.id }));
+      else if (!t.match && t.item === old.id && P.dn(t.date) >= from) moved.push(Object.assign({}, t, { item: nu.id }));
+    }
+    if (moved.length) saveTxns(moved);
+    const rs = rulesMap(), up = {}; for (const k in rs) if (rs[k] === old.id) up[k] = nu.id;
+    if (Object.keys(up).length) saveSettings({ rules: up });
+  }
+
+  // ----- one occurrence -----
+  function openOcc(key) {
+    const L = ledger(), T = L.today;
+    const o = L.occs.find(x => x.key === key);
+    if (!o) return;
+    const it = o.item, k = it.kind, rawKey = P.ds(o.raw);
+    const ov = (it.ov || {})[rawKey] || {};
+    const sched = P.adjust(o.raw, P.normRule(it.rule).weekend);
+    let status = '';
+    if (k !== 'spend') {
+      if (o.txn) {
+        status = `<div class="box"><h3>${k === 'income' ? 'Received' : 'Paid'}</h3><div class="kv"><span>${esc(o.txn.desc || it.name)} · ${fdW(P.dn(o.txn.date))}</span><b>${fmS(+o.txn.amount)}</b></div><div class="row"><button type="button" class="btn sm" data-act="txn" data-id="${esc(o.txn.id)}">Open transaction</button><button type="button" class="btn sm" id="o-unpay">${o.txn.src === 'mark' ? 'Undo' : 'Unlink from this date'}</button></div></div>`;
+      } else if (o.status !== 'skipped') {
+        status = `<div class="box"><h3>${k === 'income' ? 'Mark as received' : 'Mark as paid'}</h3>
+          <div class="two"><div class="fld"><label for="o-pamt">Amount</label><input class="inp money" id="o-pamt" inputmode="decimal" value="${o.planned.toFixed(2)}"></div><div class="fld"><label for="o-pdate">Date</label><input class="inp" type="date" id="o-pdate" value="${P.ds(Math.min(T, o.date))}"></div></div>
+          <div class="row"><button type="button" class="btn primary" id="o-pay">${k === 'income' ? 'Mark received' : 'Mark paid'}</button></div>
+          <p class="hint muted" style="margin:0;font-size:var(--t-xs)">${o.status === 'past' ? 'This date is before your balance date, so it is already counted. Marking it keeps your records complete.' : 'Logs it as a transaction, which replaces the planned amount on your calendar.'}</p></div>`;
+      }
+    } else if (o.status !== 'skipped') {
+      const ts = (o.txns || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+      const addDay = Math.max(o.date, Math.min(T, o.wEnd - 1));
+      status = `<div class="box"><h3>Budget for ${fdS(o.date)} – ${fdS(o.wEnd - 1)}</h3>
+        <div class="kv"><span>Planned</span><b>${fm(o.planned)}</b></div><div class="kv"><span>Spent</span><b>${fm(o.spent || 0)}</b></div>
+        <div class="kv"><span>${o.over ? 'Over by' : 'Left'}</span><b class="${o.over ? 'out' : 'in'}">${fm(o.over || o.left || 0)}</b></div>
+        ${ts.length ? `<div class="reg">${ts.map(t => txnRow(t, L, true)).join('')}</div>` : ''}
+        <div class="row"><button type="button" class="btn primary sm" data-act="add-txn" data-item="${esc(it.id)}" data-d="${addDay}">${svg('plus')}Log a purchase</button></div></div>`;
+    }
+    const pays = P.payDates(L);
+    let moveBtns = '';
+    if (k !== 'income' && pays.length) {
+      let i = -1; for (let j = 0; j < pays.length; j++) if (pays[j] <= o.date) i = j;
+      const prev = i >= 1 ? pays[i - 1] : null, next = i + 1 < pays.length ? pays[i + 1] : null;
+      const cur = i >= 0 ? pays[i] : null;
+      const opts = [];
+      if (cur != null && cur !== o.date) opts.push([cur, `Pay on payday, ${fdS(cur)}`]);
+      if (prev != null) opts.push([prev, `Pay from the ${fdS(prev)} paycheck`]);
+      if (next != null) opts.push([next, `Pay from the ${fdS(next)} paycheck`]);
+      if (opts.length) moveBtns = `<div class="row">${opts.map(([d, l]) => `<button type="button" class="btn sm" data-move="${d}">${l}</button>`).join('')}</div>`;
+    }
+    const hasOv = ov.amount != null || ov.date || ov.skip;
+    const html = `<div class="form">
+      <div class="kv"><span class="muted">${KIND_LABEL[k]} · ${esc(P.describe(it.rule))}</span><b>${fm(o.planned)}</b></div>
+      ${status}
+      <div class="box"><h3>Change just this one</h3>
+        <div class="two"><div class="fld"><label for="o-amt">Amount</label><input class="inp money" id="o-amt" inputmode="decimal" value="${o.planned.toFixed(2)}"></div><div class="fld"><label for="o-date">Date</label><input class="inp" type="date" id="o-date" value="${P.ds(o.date)}"></div></div>
+        ${moveBtns}
+        <label class="check"><input type="checkbox" id="o-skip"${o.skip ? ' checked' : ''}><span>Skip this one</span></label>
+        <p class="err" id="o-err" hidden></p>
+        <div class="row"><button type="button" class="btn primary" id="o-save">Save change</button>${hasOv ? '<button type="button" class="btn" id="o-reset">Back to the regular schedule</button>' : ''}</div>
+        <p class="hint muted" style="margin:0;font-size:var(--t-xs)">Normally ${fdW(sched)}${o.shifted ? ` (moved off the weekend from ${fdS(o.raw)})` : ''}. Other dates in the schedule stay the same.</p></div>
+      <div class="sheet-acts"><button type="button" class="btn" data-act="edit-item" data-id="${esc(it.id)}">Edit the whole schedule</button></div>
+    </div>`;
+    openSheet(it.name + ' · ' + fdS(o.date), html, () => {
+      const pay = $('#o-pay');
+      if (pay) pay.addEventListener('click', () => {
+        const amt = P.parseAmount($('#o-pamt').value), dt = $('#o-pdate').value;
+        if (!(amt > 0) || !dt) { toast('Enter the amount and date.'); return; }
+        saveTxns([{ id: newId(), date: dt, amount: P.round2(o.sign * Math.abs(amt)), desc: it.name, item: it.id, match: o.key, src: 'mark', created: Date.now() }]);
+        closeSheet(); toast(k === 'income' ? 'Marked received.' : 'Marked paid.');
+      });
+      const un = $('#o-unpay');
+      if (un) un.addEventListener('click', () => {
+        if (o.txn.src === 'mark') saveTxns([], [o.txn]); else saveTxns([Object.assign({}, o.txn, { match: null })]);
+        closeSheet(); toast('Done.');
+      });
+      $$('[data-move]').forEach(b => b.addEventListener('click', () => {
+        const d = +b.dataset.move;
+        const nv = Object.assign({}, ov); delete nv.skip;
+        if (d === sched) delete nv.date; else nv.date = P.ds(d);
+        setOv(it, rawKey, Object.keys(nv).length ? nv : null);
+        closeSheet(); toast(`${it.name} moved to ${fdS(d)}.`);
+      }));
+      $('#o-save').addEventListener('click', () => {
+        const amt = P.parseAmount($('#o-amt').value), dt = $('#o-date').value, skip = $('#o-skip').checked;
+        if (!(amt >= 0) || !dt) { showErr('#o-err', 'Enter an amount and a date.'); return; }
+        const nv = {};
+        if (Math.abs(amt - (+it.amount || 0)) > 0.004) nv.amount = P.round2(amt);
+        if (P.dn(dt) !== sched) nv.date = dt;
+        if (skip) nv.skip = true;
+        setOv(it, rawKey, Object.keys(nv).length ? nv : null);
+        closeSheet(); toast('Saved.');
+      });
+      const rs = $('#o-reset');
+      if (rs) rs.addEventListener('click', () => { setOv(it, rawKey, null); closeSheet(); toast('Back on the regular schedule.'); });
+    });
+  }
+
+  // ----- transaction -----
+  function catOptions(sel) {
+    const its = items();
+    const grp = (k, label) => { const l = its.filter(i => i.kind === k).sort((a, b) => a.name.localeCompare(b.name)); return l.length ? `<optgroup label="${label}">${l.map(i => `<option value="${esc(i.id)}"${i.id === sel ? ' selected' : ''}>${esc(i.name)}</option>`).join('')}</optgroup>` : ''; };
+    return `<option value="">Uncategorized</option>${grp('spend', 'Spending budgets')}${grp('bill', 'Bills')}${grp('income', 'Money in')}`;
+  }
+
+  function openTxn(t, preset) {
+    preset = preset || {};
+    const T = P.todayN(), isNew = !t;
+    const tx = t ? clone(t) : { id: newId(), date: P.ds(preset.date != null ? preset.date : T), amount: 0, desc: '', item: preset.item || null, match: null, src: 'manual', created: Date.now() };
+    const pre = tx.item && S.items[tx.item];
+    const dir = +tx.amount > 0 || (isNew && pre && pre.kind === 'income') ? 'in' : 'out';
+    const html = `<form class="form" id="f-tx" novalidate>
+      <div class="segm" role="radiogroup" aria-label="Direction"><input type="radio" name="dir" id="d-out" value="out"${dir === 'out' ? ' checked' : ''}><label for="d-out">Money out</label><input type="radio" name="dir" id="d-in" value="in"${dir === 'in' ? ' checked' : ''}><label for="d-in">Money in</label></div>
+      <div class="two"><div class="fld"><label for="t-amt">Amount</label><input class="inp money" id="t-amt" inputmode="decimal" autocomplete="off" value="${+tx.amount ? Math.abs(+tx.amount).toFixed(2) : ''}" placeholder="0.00"></div>
+        <div class="fld"><label for="t-date">Date</label><input class="inp" type="date" id="t-date" value="${esc(tx.date)}"></div></div>
+      <div class="fld"><label for="t-desc">Description</label><input class="inp" id="t-desc" autocomplete="off" value="${esc(tx.desc)}" placeholder="Kroger"></div>
+      <div class="fld"><label for="t-cat">Category</label><select class="inp" id="t-cat">${catOptions(tx.item)}</select><span class="hint" id="t-cat-hint"></span></div>
+      <div class="fld" id="w-match" hidden><label for="t-match">Which scheduled date is this for?</label><select class="inp" id="t-match"></select><span class="hint">Picking a date replaces that planned amount on your calendar with this one.</span></div>
+      <p class="err" id="t-err" hidden></p>
+      <div class="sheet-acts" id="t-acts">${!isNew ? '<button type="button" class="btn danger" id="t-del">Delete</button>' : ''}<button type="button" class="btn push" data-act="close">Cancel</button><button type="submit" class="btn primary">${isNew ? 'Log it' : 'Save'}</button></div>
+    </form>`;
+    openSheet(isNew ? 'Log a transaction' : 'Transaction', html, () => {
+      const f = $('#f-tx');
+      let catTouched = false;
+      function refresh() {
+        const it = S.items[$('#t-cat').value];
+        $('#t-cat-hint').textContent = it && it.kind === 'spend' ? 'Comes out of this budget, so it does not lower your projected balance twice.' : '';
+        const w = $('#w-match');
+        if (!it || it.kind === 'spend') { w.hidden = true; $('#t-match').innerHTML = ''; return; }
+        w.hidden = false;
+        const L = ledger(); const d = P.dn($('#t-date').value); const dd = isFinite(d) ? d : T;
+        const opts = L.occs.filter(o => o.item.id === it.id && !o.skip && Math.abs(o.date - dd) <= 45 && (!o.txn || o.txn.id === tx.id || o.txn.src === 'mark'));
+        let sel = tx.match && opts.some(o => o.key === tx.match) ? tx.match : '';
+        if (!sel && (isNew || catTouched)) {
+          const free = opts.filter(o => !o.txn || o.txn.id === tx.id).sort((a, b) => Math.abs(a.date - dd) - Math.abs(b.date - dd));
+          if (free.length && Math.abs(free[0].date - dd) <= 10) sel = free[0].key;
+        }
+        $('#t-match').innerHTML = `<option value="">None of these</option>` + opts.map(o => `<option value="${esc(o.key)}"${o.key === sel ? ' selected' : ''}>${fdW(o.date)} · ${fm(o.planned)}${o.txn && o.txn.id !== tx.id ? ' (marked paid)' : ''}</option>`).join('');
+        if (!$('#t-amt').value && sel) { const o = opts.find(x => x.key === sel); if (o) $('#t-amt').value = o.planned.toFixed(2); }
+      }
+      $('#t-cat').addEventListener('change', () => {
+        catTouched = true;
+        const it = S.items[$('#t-cat').value];
+        if (it) f.querySelector(`#d-${it.kind === 'income' ? 'in' : 'out'}`).checked = true;
+        if (it && !$('#t-desc').value.trim()) $('#t-desc').value = it.name;
+        refresh();
+      });
+      $('#t-date').addEventListener('change', refresh);
+      $('#t-match').addEventListener('change', () => { const o = ledger().occs.find(x => x.key === $('#t-match').value); if (o && !$('#t-amt').value) $('#t-amt').value = o.planned.toFixed(2); });
+      refresh();
+      if (!isNew) $('#t-del').addEventListener('click', () => {
+        $('#t-acts').innerHTML = `<span style="font-size:var(--t-sm)">Delete this transaction?</span><button type="button" class="btn push" data-act="close">Keep it</button><button type="button" class="btn danger" id="t-yes">Delete</button>`;
+        $('#t-yes').addEventListener('click', () => { saveTxns([], [tx]); closeSheet(); toast('Deleted.'); });
+      });
+      f.addEventListener('submit', e => {
+        e.preventDefault();
+        const amt = P.parseAmount($('#t-amt').value), date = $('#t-date').value;
+        if (!(Math.abs(amt) > 0)) { showErr('#t-err', 'Enter an amount, like 42.50.'); return; }
+        if (!date || !isFinite(P.dn(date))) { showErr('#t-err', 'Pick a date.'); return; }
+        const d = f.querySelector('input[name=dir]:checked').value;
+        const cat = $('#t-cat').value || null, it = cat ? S.items[cat] : null;
+        const match = it && it.kind !== 'spend' ? ($('#t-match').value || null) : null;
+        const desc = $('#t-desc').value.trim();
+        const nt = Object.assign({}, tx, { date, amount: P.round2(d === 'in' ? Math.abs(amt) : -Math.abs(amt)), desc: desc || (it ? it.name : ''), item: cat, match });
+        if (nt.src === 'mark' && (!match || match !== tx.match)) nt.src = 'manual';
+        const removed = [], relinked = [];
+        if (match) for (const x of Object.values(S.txns)) if (x.match === match && x.id !== nt.id) { if (x.src === 'mark') removed.push(x); else relinked.push(Object.assign({}, x, { match: null })); }
+        saveTxns([nt].concat(relinked), removed);
+        if (cat && desc && cat !== (t && t.item) && nt.src !== 'mark') { const rk = P.ruleKey(desc); if (rk) saveSettings({ rules: { [rk]: cat } }); }
+        closeSheet(); toast(isNew ? 'Logged.' : 'Saved.');
+      });
+    });
+  }
+
+  // ----- balance -----
+  function openBalance() {
+    const L = ledger(), T = L.today, A = L.A;
+    const html = `<form class="form" id="f-bal" novalidate>
+      <p class="muted" style="margin:0;font-size:var(--t-sm)">Open your bank app and enter what is in checking right now. Every future day on the calendar is figured forward from this number. Use a minus sign if the account is overdrawn.</p>
+      <div class="two"><div class="fld"><label for="b-amt">Balance</label><input class="inp money" id="b-amt" inputmode="decimal" autocomplete="off" value="${A.set ? A.balance.toFixed(2) : ''}" placeholder="0.00"></div>
+        <div class="fld"><label for="b-date">As of</label><input class="inp" type="date" id="b-date" value="${P.ds(T)}"></div></div>
+      <div id="b-today"></div>
+      <p class="err" id="b-err" hidden></p>
+      <div class="sheet-acts"><button type="button" class="btn push" data-act="close">Cancel</button><button type="submit" class="btn primary">Save balance</button></div>
+    </form>`;
+    openSheet('Bank balance', html, () => {
+      function refresh() {
+        const d = P.dn($('#b-date').value), box = $('#b-today');
+        if (!isFinite(d)) { box.innerHTML = ''; return; }
+        const os = ledger().occs.filter(o => o.date === d && o.item.kind !== 'spend' && !o.skip && !o.txn);
+        box.innerHTML = os.length ? `<div class="box"><h3>Scheduled for ${fdS(d)}</h3><p class="hint muted" style="margin:0;font-size:var(--t-xs)">Leave checked if it has already hit your account. Uncheck anything still pending so it is counted later today.</p>${os.map(o => `<label class="check"><input type="checkbox" class="b-occ" value="${esc(o.key)}" checked><span>${esc(o.item.name)} <b class="num">${fmS(o.sign * o.planned)}</b></span></label>`).join('')}</div>` : '';
+      }
+      $('#b-date').addEventListener('change', refresh);
+      refresh();
+      $('#f-bal').addEventListener('submit', e => {
+        e.preventDefault();
+        const v = P.parseAmount($('#b-amt').value), d = $('#b-date').value;
+        if (!isFinite(v)) { showErr('#b-err', 'Enter your balance, like 1240.50.'); return; }
+        if (!d) { showErr('#b-err', 'Pick a date.'); return; }
+        const pending = $$('.b-occ').filter(c => !c.checked).map(c => c.value);
+        saveSettings({ anchor: { date: d, balance: P.round2(v), setAt: Date.now(), pending, example: false } });
+        closeSheet(); toast('Balance updated.');
+      });
+    });
+  }
+
+  // ----- CSV import -----
+  let CSV = null;
+  function openCSV() {
+    CSV = null;
+    openSheet('Import from your bank', `<div class="form">
+      <p class="muted" style="margin:0;font-size:var(--t-sm)">On your bank's website, download your checking account's transactions as a CSV file (it may be called "Comma separated" or "Spreadsheet"). Then choose it here. Nothing is sent to your bank.</p>
+      <div class="fld"><label for="c-file">CSV file</label><input class="inp" type="file" id="c-file" accept=".csv,.txt,text/csv,text/plain"></div>
+      <div class="fld"><label for="c-text">Or paste the file's text</label><textarea class="inp" id="c-text" placeholder="Date,Description,Amount&#10;10/15/2026,KROGER #123,-54.21"></textarea></div>
+      <p class="err" id="c-err" hidden></p>
+      <div class="sheet-acts"><button type="button" class="btn push" data-act="close">Cancel</button><button type="button" class="btn primary" id="c-next">Continue</button></div></div>`, () => {
+      $('#c-file').addEventListener('change', e => {
+        const file = e.target.files && e.target.files[0]; if (!file) return;
+        const rd = new FileReader();
+        rd.onload = () => { $('#c-text').value = String(rd.result || ''); csvStep2(); };
+        rd.onerror = () => showErr('#c-err', 'That file could not be read. Try pasting its text instead.');
+        rd.readAsText(file);
+      });
+      $('#c-next').addEventListener('click', csvStep2);
+    }, true);
+  }
+  function csvStep2() {
+    const text = $('#c-text') ? $('#c-text').value : '';
+    const rows = P.parseCSV(text);
+    if (rows.length < 1) { showErr('#c-err', 'No rows found. Choose the CSV file from your bank, or paste its text.'); return; }
+    const g = P.guessColumns(rows);
+    CSV = { rows, map: g, mode: g.amount >= 0 || g.debit < 0 ? 'one' : 'two', sign: 'neg', fmt: null };
+    if (CSV.mode === 'one' && g.amount < 0) g.amount = 0;
+    const vals = rows.slice(g.headerRow + 1).map(r => P.parseAmount(r[g.amount])).filter(isFinite);
+    if (CSV.mode === 'one' && vals.length && vals.every(v => v >= 0)) CSV.allPos = true;
+    renderStep2();
+  }
+  function csvParse() {
+    const { rows, map } = CSV, out = []; let bad = 0;
+    for (const r of rows.slice(map.headerRow + 1)) {
+      const date = P.parseDate(r[map.date], CSV.fmt === 'AUTO' ? null : CSV.fmt);
+      let amt;
+      if (CSV.mode === 'one') { amt = P.parseAmount(r[map.amount]); if (CSV.sign === 'pos') amt = -amt; }
+      else {
+        const de = P.parseAmount(r[map.debit]), cr = P.parseAmount(r[map.credit]);
+        amt = !isFinite(de) && !isFinite(cr) ? NaN : (isFinite(cr) ? Math.abs(cr) : 0) - (isFinite(de) ? Math.abs(de) : 0);
+      }
+      const desc = map.desc >= 0 ? String(r[map.desc] || '').replace(/\s+/g, ' ').trim() : '';
+      if (!date || !isFinite(amt) || Math.abs(amt) < 0.005) { bad++; continue; }
+      out.push({ date, amount: P.round2(amt), desc });
+    }
+    return { out, bad };
+  }
+  function renderStep2() {
+    const { rows, map } = CSV;
+    const ncol = Math.max.apply(null, rows.map(r => r.length));
+    const head = map.headerRow >= 0 ? rows[map.headerRow] : null;
+    const cn = i => (head && head[i] ? head[i] : 'Column ' + (i + 1));
+    const opt = (sel, none) => (none ? `<option value="-1"${sel < 0 ? ' selected' : ''}>(none)</option>` : '') + Array.from({ length: ncol }, (_, i) => `<option value="${i}"${i === sel ? ' selected' : ''}>${esc(cn(i))}</option>`).join('');
+    if (!CSV.fmt) CSV.fmt = P.detectDateFormat(rows.slice(map.headerRow + 1).map(r => r[map.date]));
+    const { out, bad } = csvParse();
+    const prev = out.slice(0, 6).map(r => `<tr><td>${fdY(P.dn(r.date))}</td><td>${esc(r.desc)}</td><td class="r ${r.amount > 0 ? 'in' : ''}">${fmS(r.amount)}</td></tr>`).join('');
+    const html = `<div class="form">
+      <p class="muted" style="margin:0;font-size:var(--t-sm)">Check that the columns are right. The preview below should show money you spent as minus amounts.</p>
+      <div class="two"><div class="fld"><label for="m-date">Date column</label><select class="inp" id="m-date">${opt(map.date)}</select></div>
+        <div class="fld"><label for="m-desc">Description column</label><select class="inp" id="m-desc">${opt(map.desc, true)}</select></div></div>
+      <div class="fld"><label for="m-mode">Amounts are in</label><select class="inp" id="m-mode"><option value="one"${CSV.mode === 'one' ? ' selected' : ''}>One column</option><option value="two"${CSV.mode === 'two' ? ' selected' : ''}>Two columns: money out and money in</option></select></div>
+      ${CSV.mode === 'one'
+        ? `<div class="two"><div class="fld"><label for="m-amt">Amount column</label><select class="inp" id="m-amt">${opt(map.amount)}</select></div><div class="fld"><label for="m-sign">Money you spent shows as</label><select class="inp" id="m-sign"><option value="neg"${CSV.sign === 'neg' ? ' selected' : ''}>Negative numbers</option><option value="pos"${CSV.sign === 'pos' ? ' selected' : ''}>Positive numbers</option></select></div></div>${CSV.allPos ? '<p class="hint warn" style="margin:0;font-size:var(--t-xs)">Every amount in this file is positive. If it is a credit card export, pick "Positive numbers".</p>' : ''}`
+        : `<div class="two"><div class="fld"><label for="m-debit">Money out column</label><select class="inp" id="m-debit">${opt(map.debit, true)}</select></div><div class="fld"><label for="m-credit">Money in column</label><select class="inp" id="m-credit">${opt(map.credit, true)}</select></div></div>`}
+      <div class="fld"><label for="m-fmt">Date format</label><select class="inp" id="m-fmt">${[['MDY', 'Month/Day/Year (10/17/2026)'], ['DMY', 'Day/Month/Year (17/10/2026)'], ['YMD', 'Year-Month-Day (2026-10-17)'], ['AUTO', 'Other / written out']].map(([v, l]) => `<option value="${v}"${CSV.fmt === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="kv"><span>${out.length} transactions read${bad ? ` · ${bad} rows skipped (no date or amount)` : ''}</span><b></b></div>
+      ${prev ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody>${prev}</tbody></table></div>` : ''}
+      <p class="err" id="c-err" hidden></p>
+      <div class="sheet-acts"><button type="button" class="btn" id="c-back">Back</button><button type="button" class="btn primary push" id="c-review"${out.length ? '' : ' disabled'}>Review ${out.length}</button></div></div>`;
+    $('#sheet-body').innerHTML = html;
+    const set = (id, fn) => { const el = $(id); if (el) el.addEventListener('change', () => { fn(el.value); renderStep2(); }); };
+    set('#m-date', v => { map.date = +v; CSV.fmt = null; });
+    set('#m-desc', v => { map.desc = +v; });
+    set('#m-mode', v => { CSV.mode = v; if (v === 'two' && map.debit < 0) { map.debit = 0; map.credit = Math.min(1, ncol - 1); } if (v === 'one' && map.amount < 0) map.amount = 0; });
+    set('#m-amt', v => { map.amount = +v; });
+    set('#m-sign', v => { CSV.sign = v; });
+    set('#m-debit', v => { map.debit = +v; });
+    set('#m-credit', v => { map.credit = +v; });
+    set('#m-fmt', v => { CSV.fmt = v; });
+    $('#c-back').addEventListener('click', openCSV);
+    $('#c-review').addEventListener('click', csvStep3);
+  }
+  function csvStep3() {
+    const { out } = csvParse();
+    const L = ledger();
+    const exist = {};
+    for (const t of Object.values(S.txns)) { const h = t.hash || P.txnHash(t.date, t.amount, t.desc); exist[h] = (exist[h] || 0) + 1; }
+    const seen = {}, used = new Set(), claimed = new Set();
+    const manual = Object.values(S.txns).filter(t => t.src !== 'csv');
+    CSV.review = out.sort((a, b) => a.date.localeCompare(b.date)).map(r => {
+      const h = P.txnHash(r.date, r.amount, r.desc);
+      seen[h] = (seen[h] || 0) + 1;
+      const dup = seen[h] <= (exist[h] || 0);
+      const row = Object.assign({}, r, { hash: h, dup, include: !dup, item: null, match: null, replaces: null, touched: false });
+      if (dup) return row;
+      row.item = P.suggestItem(S, r.desc, r.amount);
+      const twin = manual.find(t => !claimed.has(t.id) && Math.abs(+t.amount - r.amount) < 0.005 && Math.abs(P.dn(t.date) - P.dn(r.date)) <= 4);
+      if (twin) { claimed.add(twin.id); row.replaces = twin.id; row.twin = twin.desc || 'your entry'; if (twin.item) row.item = twin.item; if (twin.match) { row.match = twin.match; used.add(twin.match); } }
+      if (!row.match) {
+        const o = P.suggestMatch(L, S, r, used, row.item && S.items[row.item] && S.items[row.item].kind !== 'spend' ? row.item : null) || (row.item ? null : P.suggestMatch(L, S, r, used));
+        if (o) { row.match = o.key; used.add(o.key); row.item = o.item.id; }
+      }
+      return row;
+    });
+    CSV.used = used;
+    renderStep3();
+  }
+  function renderStep3(keepScroll) {
+    const R = CSV.review, A = ledger().A;
+    const inc = R.filter(r => r.include);
+    const dups = R.filter(r => r.dup).length, matched = inc.filter(r => r.match).length, cat = inc.filter(r => r.item).length, repl = inc.filter(r => r.replaces).length;
+    const before = inc.filter(r => P.dn(r.date) <= A.date).length;
+    const L = ledger();
+    const row = (r, i) => {
+      const o = r.match ? L.occs.find(x => x.key === r.match) : null;
+      return `<div class="rv${r.include ? '' : ' off'}"><input type="checkbox" data-rv="${i}"${r.include ? ' checked' : ''} aria-label="Import this row"><span class="d">${esc(r.desc || '(no description)')}</span><span class="a${r.amount > 0 ? ' in' : ''}">${fmS(r.amount)}</span>
+        <span class="x"><span>${fdS(P.dn(r.date))}</span><select data-rc="${i}" aria-label="Category">${catOptions(r.item)}</select>${o ? `<span class="pill in">${o.item.kind === 'income' ? 'Payday' : 'Pays'} ${esc(o.item.name)} · ${fdS(o.date)}</span>` : ''}${r.dup ? '<span class="pill">Already imported</span>' : ''}${r.replaces && r.include ? `<span class="pill acc">Replaces "${esc(r.twin)}" you logged</span>` : ''}</span></div>`;
+    };
+    const sc = $('.rv-list') ? $('.rv-list').scrollTop : 0;
+    $('#sheet-body').innerHTML = `<div class="form">
+      <div class="box"><div class="kv"><span>Rows in file</span><b>${R.length}</b></div>
+        ${dups ? `<div class="kv"><span>Already imported (unchecked)</span><b>${dups}</b></div>` : ''}
+        <div class="kv"><span>Matched to scheduled bills or paydays</span><b>${matched}</b></div>
+        <div class="kv"><span>With a category</span><b>${cat} of ${inc.length}</b></div>
+        ${repl ? `<div class="kv"><span>Replacing entries you logged by hand</span><b>${repl}</b></div>` : ''}</div>
+      ${before ? `<p class="muted" style="margin:0;font-size:var(--t-xs)">${before} ${before === 1 ? 'row is' : 'rows are'} dated on or before your balance date (${fdS(A.date)}). Your bank balance already includes them, so they are saved for your records and budgets without lowering the projection again.</p>` : ''}
+      <div class="rv-list">${R.map(row).join('')}</div>
+      <div class="sheet-acts"><button type="button" class="btn" id="c-back2">Back</button><button type="button" class="btn primary push" id="c-go"${inc.length ? '' : ' disabled'}>Import ${inc.length}</button></div></div>`;
+    if (keepScroll) $('.rv-list').scrollTop = sc;
+    $('.rv-list').addEventListener('change', e => {
+      const t = e.target;
+      if (t.dataset.rv != null) { CSV.review[+t.dataset.rv].include = t.checked; renderStep3(true); }
+      else if (t.dataset.rc != null) {
+        const r = CSV.review[+t.dataset.rc];
+        r.item = t.value || null; r.touched = true;
+        if (r.match) { CSV.used.delete(r.match); r.match = null; }
+        const it = r.item && S.items[r.item];
+        if (it && it.kind !== 'spend') { const o = P.suggestMatch(ledger(), S, r, CSV.used, it.id); if (o) { r.match = o.key; CSV.used.add(o.key); } }
+        renderStep3(true);
+      }
+    });
+    $('#c-back2').addEventListener('click', renderStep2);
+    $('#c-go').addEventListener('click', csvImport);
+  }
+  function csvImport() {
+    const now = Date.now(), list = [], removed = new Map(), learn = {};
+    const L = ledger();
+    let matched = 0;
+    CSV.review.forEach((r, i) => {
+      if (!r.include) return;
+      const t = { id: newId() + i.toString(36), date: r.date, amount: r.amount, desc: r.desc, item: r.item || null, match: r.match || null, src: 'csv', created: now + i, hash: r.hash };
+      if (r.replaces && S.txns[r.replaces]) { const old = S.txns[r.replaces]; removed.set(old.id, old); if (!t.item && old.item) t.item = old.item; if (!t.match && old.match) t.match = old.match; }
+      if (t.match) { matched++; const o = L.occs.find(x => x.key === t.match); if (o && o.txn && o.txn.src === 'mark') removed.set(o.txn.id, o.txn); }
+      if (r.touched && r.item && r.desc) { const k = P.ruleKey(r.desc); if (k) learn[k] = r.item; }
+      list.push(t);
+    });
+    saveTxns(list, [...removed.values()]);
+    if (Object.keys(learn).length) saveSettings({ rules: learn });
+    closeSheet();
+    toast(`Imported ${list.length} ${list.length === 1 ? 'transaction' : 'transactions'}${matched ? `, ${matched} matched to your schedule` : ''}.`);
+    const last = list.map(t => t.date).sort().pop();
+    if (last) { const a = P.ymd(P.dn(last)); UI.actYM = { y: a.y, m: a.m }; }
+    setTab('act');
+  }
+
+  // ----- backup -----
+  async function exportData() {
+    const data = JSON.stringify({ app: 'payday-ledger', version: 1, exported: new Date().toISOString(), settings: S.settings, items: S.items, txns: S.txns });
+    const name = 'payday-ledger-backup-' + P.ds(P.todayN()) + '.json';
+    try {
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast('Backup saved to your Downloads.');
+      return;
+    } catch (e) { /* fall back to copyable text */ }
+    openSheet('Backup', `<div class="form"><p class="muted" style="margin:0;font-size:var(--t-sm)">Copy this text and keep it somewhere safe, like a note or an email to yourself. Paste it into Restore to bring everything back.</p><textarea class="inp" id="bk-text" readonly style="min-height:200px">${esc(data)}</textarea><div class="sheet-acts"><button type="button" class="btn primary push" id="bk-copy">Copy</button></div></div>`, () => {
+      $('#bk-copy').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(data); toast('Copied.'); }
+        catch (e) { const ta = $('#bk-text'); ta.focus(); ta.select(); toast('Text selected. Use your copy command.'); }
+      });
+    });
+  }
+  function openRestore() {
+    openSheet('Restore from backup', `<div class="form">
+      <p class="muted" style="margin:0;font-size:var(--t-sm)">Choose a backup file you exported, or paste its text. This replaces everything currently in Payday Ledger.</p>
+      <div class="fld"><label for="r-file">Backup file</label><input class="inp" type="file" id="r-file" accept=".json,application/json,text/plain"></div>
+      <div class="fld"><label for="r-text">Or paste the backup text</label><textarea class="inp" id="r-text"></textarea></div>
+      <p class="err" id="r-err" hidden></p>
+      <div class="sheet-acts"><button type="button" class="btn push" data-act="close">Cancel</button><button type="button" class="btn danger" id="r-go">Replace with backup</button></div></div>`, () => {
+      $('#r-file').addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if (!file) return; const rd = new FileReader(); rd.onload = () => { $('#r-text').value = String(rd.result || ''); }; rd.readAsText(file); });
+      $('#r-go').addEventListener('click', () => {
+        let d = null;
+        try { d = JSON.parse($('#r-text').value); } catch (e) { d = null; }
+        if (!d || typeof d !== 'object' || (!d.items && !d.txns && !d.settings)) { showErr('#r-err', 'That is not a Payday Ledger backup. Export one from Settings first.'); return; }
+        replaceAll(d).then(() => toast('Backup restored.'));
+        closeSheet();
+      });
+    });
+  }
+
+  // ----- sync setup & account -----
+  const RULES = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /users/{userId}/{document=**} {\n      allow read, write: if request.auth != null && request.auth.uid == userId;\n    }\n  }\n}";
+  async function copyText(text, sel) {
+    try { await navigator.clipboard.writeText(text); toast('Copied.'); }
+    catch (e) {
+      const el = $(sel);
+      if (el) { const r = document.createRange(); r.selectNodeContents(el); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      toast('Selected. Use your copy command.');
+    }
+  }
+  function attachFirebase(fx) {
+    FBX = fx;
+    let first = true;
+    FBX.Au.onAuthStateChanged(FBX.auth, u => {
+      if (u) {
+        if (!USER || USER.uid !== u.uid) { USER = { uid: u.uid, email: u.email || '' }; startSync(u.uid); }
+      } else {
+        USER = null; stopSync(); startLocal();
+        if (first && pendingSetupMsg === 'signin') setTimeout(() => openSignIn(false), 60);
+      }
+      first = false; pendingSetupMsg = '';
+    });
+  }
+  function openSyncSetup() {
+    const host = location.hostname || 'your app address';
+    openSheet('Set up sync', `<div class="form">
+      <p class="muted" style="margin:0;font-size:var(--t-sm)">Sync runs on a free Firebase project that belongs to you. Do this once, on your computer; it takes about 10 minutes. Your phone then connects with a link.</p>
+      <ol class="guide">
+        <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a>, sign in with a Google account, and create a project. Any name works, like <i>payday-ledger</i>. You can turn Google Analytics off.</li>
+        <li>Open <b>Authentication</b> in the left menu and click <b>Get started</b>. Under Sign-in method, pick <b>Email/Password</b>, switch it on, and save.</li>
+        <li>Still in Authentication, open <b>Settings</b>, then <b>Authorized domains</b>. Click <b>Add domain</b> and enter <code>${esc(host)}</code>.</li>
+        <li>Open <b>Firestore</b> in the left menu and click <b>Create database</b>. If it asks, choose Standard edition, a location near you, and production mode.</li>
+        <li>In Firestore, open the <b>Rules</b> tab. Replace everything with the rules below and click <b>Publish</b>. They make sure only you can read your budget.</li>
+        <li>Click the gear icon, then <b>Project settings</b>. Under Your apps, click the <b>&lt;/&gt;</b> web button, type a nickname, and register the app (skip Hosting). Copy the <b>firebaseConfig</b> block it shows and paste it below.</li>
+      </ol>
+      <div class="fld"><span class="lbl">Firestore rules</span><pre class="code" id="rules-text">${esc(RULES)}</pre><div class="row"><button type="button" class="btn sm" id="rules-copy">Copy rules</button></div></div>
+      <div class="fld"><label for="cfg-text">Paste your firebaseConfig</label><textarea class="inp" id="cfg-text" spellcheck="false" placeholder="const firebaseConfig = {&#10;  apiKey: &quot;...&quot;,&#10;  authDomain: &quot;...&quot;,&#10;  projectId: &quot;...&quot;,&#10;  appId: &quot;...&quot;&#10;};"></textarea></div>
+      <p class="err" id="cfg-err" hidden></p>
+      <div class="sheet-acts"><button type="button" class="btn push" data-act="close">Cancel</button><button type="button" class="btn primary" id="cfg-save">Connect</button></div>
+    </div>`, () => {
+      $('#rules-copy').addEventListener('click', () => copyText(RULES, '#rules-text'));
+      $('#cfg-save').addEventListener('click', async () => {
+        const c = parseCfg($('#cfg-text').value);
+        if (!c) { showErr('#cfg-err', 'Paste the whole firebaseConfig block. It needs apiKey, projectId and appId.'); return; }
+        const btn = $('#cfg-save'); btn.disabled = true; btn.textContent = 'Connecting…';
+        try {
+          const fx = await loadFirebase(c);
+          lsSet(CFG_KEY, JSON.stringify(c));
+          attachFirebase(fx);
+          closeSheet(); openSignIn(true);
+        } catch (e) {
+          btn.disabled = false; btn.textContent = 'Connect';
+          showErr('#cfg-err', 'Could not load sync. Check your internet connection and try again.');
+        }
+      });
+    }, true);
+  }
+  function openSignIn(fresh) {
+    if (!FBX) { openSyncSetup(); return; }
+    openSheet(fresh ? 'Create your sync account' : 'Sign in to sync', `<form class="form" id="f-auth" novalidate>
+      <p class="muted" style="margin:0;font-size:var(--t-sm)" id="au-intro"></p>
+      <div class="fld"><label for="au-email">Email</label><input class="inp" type="email" id="au-email" autocomplete="email" inputmode="email" autocapitalize="off"></div>
+      <div class="fld"><label for="au-pass">Password</label><input class="inp" type="password" id="au-pass"><span class="hint muted" style="font-size:var(--t-xs)">At least 6 characters.</span></div>
+      <p class="err" id="au-err" hidden></p>
+      <div class="sheet-acts"><button type="button" class="btn ghost" id="au-reset">Forgot password?</button><button type="button" class="btn push" id="au-alt"></button><button type="submit" class="btn primary" id="au-go"></button></div>
+    </form>`, () => {
+      let create = !!fresh;
+      const sync = () => {
+        $('#au-go').textContent = create ? 'Create account' : 'Sign in';
+        $('#au-alt').textContent = create ? 'I already have one' : 'Create account';
+        $('#sheet-title').textContent = create ? 'Create your sync account' : 'Sign in to sync';
+        $('#au-pass').setAttribute('autocomplete', create ? 'new-password' : 'current-password');
+        $('#au-intro').textContent = create ? 'Pick an email and password for your budget. You will use the same ones on your phone.' : 'Use the email and password you created for Payday Ledger sync.';
+        $('#au-reset').hidden = create;
+      };
+      sync();
+      $('#au-alt').addEventListener('click', () => { create = !create; showErr('#au-err', ''); sync(); });
+      $('#au-reset').addEventListener('click', async () => {
+        const em = $('#au-email').value.trim();
+        if (!em) { showErr('#au-err', 'Type your email first, then tap Forgot password.'); return; }
+        try { await FBX.Au.sendPasswordResetEmail(FBX.auth, em); showErr('#au-err', ''); toast('Password reset email sent to ' + em + '.'); }
+        catch (e) { showErr('#au-err', authMsg(e)); }
+      });
+      $('#f-auth').addEventListener('submit', async e => {
+        e.preventDefault();
+        const em = $('#au-email').value.trim(), pw = $('#au-pass').value;
+        if (!em || !pw) { showErr('#au-err', 'Enter your email and password.'); return; }
+        const btn = $('#au-go'); btn.disabled = true;
+        try {
+          if (create) await FBX.Au.createUserWithEmailAndPassword(FBX.auth, em, pw);
+          else await FBX.Au.signInWithEmailAndPassword(FBX.auth, em, pw);
+          closeSheet(); toast('Signed in. Your budget now syncs.');
+        } catch (err) { btn.disabled = false; showErr('#au-err', authMsg(err)); }
+      });
+    });
+  }
+  function openConnectDevice() {
+    const link = setupLink();
+    openSheet('Add your phone', `<div class="form">
+      <ol class="guide">
+        <li>Copy this link and send it to yourself (email or text). Open it on your phone in <b>Chrome</b>.</li>
+        <li>Sign in with the same email and password${USER && USER.email ? ` (<b>${esc(USER.email)}</b>)` : ''}.</li>
+        <li>In Chrome's ⋮ menu, tap <b>Add to Home screen</b> or <b>Install app</b>. It then opens from its own icon like any app.</li>
+      </ol>
+      <pre class="code" id="link-text">${esc(link)}</pre>
+      <div class="sheet-acts"><button type="button" class="btn primary push" id="link-copy">Copy link</button></div>
+      <p class="muted" style="margin:0;font-size:var(--t-xs)">The link only holds your Firebase project's public address. Your password and budget are not in it.</p>
+    </div>`, () => { $('#link-copy').addEventListener('click', () => copyText(link, '#link-text')); });
+  }
+  async function signOutNow() {
+    try { if (FBX) await FBX.Au.signOut(FBX.auth); } catch (e) { /* ignore */ }
+    lsDel(CACHE_KEY);
+    toast('Signed out.');
+  }
+  function removeSync() {
+    confirmSheet('Remove sync from this device?', 'This device stops syncing and forgets your Firebase project. Your synced budget stays safe in Firebase; set up sync again to get it back.', 'Remove sync', async () => {
+      await signOutNow();
+      lsDel(CFG_KEY); lsDel(CACHE_KEY);
+      location.reload();
+    });
+  }
+  let installEvt = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (UI.tab === 'set') render(); });
+  window.addEventListener('appinstalled', () => { installEvt = null; toast('Installed.'); });
+  window.addEventListener('online', syncChip);
+  window.addEventListener('offline', syncChip);
+
+  // ----- examples -----
+  function loadExamples() {
+    const T = P.todayN(), a = P.ymd(T);
+    const nextWd = wd => T + ((((wd - P.wday(T)) % 7) + 7) % 7 || 7);
+    const fri = nextWd(5), mon = nextWd(1), som = P.ds(P.fromYMD(a.y, a.m, 1));
+    const mk = (name, kind, amount, rule, extra) => Object.assign({ id: 'ex' + newId(), name, kind, amount, rule, example: true, created: Date.now() }, extra || {});
+    const list = [
+      mk('Paycheck', 'income', 1850, { type: 'weeks', every: 2, start: P.ds(fri), weekend: 'before' }, { paycheck: true }),
+      mk('Giving', 'bill', 185, { type: 'weeks', every: 2, start: P.ds(fri) }),
+      mk('Rent', 'bill', 1250, { type: 'monthly', day: 1, start: som }),
+      mk('Car payment', 'bill', 389, { type: 'monthly', day: 12, start: som }),
+      mk('Electric', 'bill', 128, { type: 'monthly', day: 18, start: som, weekend: 'after' }),
+      mk('Phone', 'bill', 85, { type: 'monthly', day: 22, start: som }),
+      mk('Streaming', 'bill', 15.99, { type: 'monthly', day: 9, start: som }),
+      mk('Haircut', 'bill', 30, { type: 'weeks', every: 3, start: P.ds(T + 5) }),
+      mk('Car insurance', 'bill', 612, { type: 'monthly', day: 5, every: 6, start: P.ds(P.addMonths(P.fromYMD(a.y, a.m, 5), 1)) }),
+      mk('Emergency fund', 'bill', 100, { type: 'weeks', every: 2, start: P.ds(fri + 1) }),
+      mk('Groceries', 'spend', 140, { type: 'weeks', every: 1, start: P.ds(mon) }),
+      mk('Gas', 'spend', 45, { type: 'weeks', every: 1, start: P.ds(mon) }),
+      mk('Eating out', 'spend', 60, { type: 'weeks', every: 2, start: P.ds(fri) })
+    ];
+    for (const it of list) saveItem(it);
+    if (!ledger().A.set) saveSettings({ anchor: { date: P.ds(T), balance: 1640, setAt: Date.now(), pending: [], example: true } });
+    toast('Example budget loaded.');
+  }
+  function removeExamples() {
+    for (const it of items()) if (it.example) deleteItem(it.id);
+    if (S.settings.anchor && S.settings.anchor.example) saveSettings({ anchor: null });
+    toast('Examples removed.');
+  }
+
+  // ---------------- toast ----------------
+  let toastT = null;
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3200);
+  }
+
+  // ---------------- events ----------------
+  function setTab(k) {
+    UI.tab = k; lsSet('paydayLedger.tab', k);
+    render(); window.scrollTo(0, 0);
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const a = b.dataset.act;
+    const d = b.dataset.d != null && b.dataset.d !== '' ? +b.dataset.d : null;
+    const inSheet = !!b.closest('#sheet');
+    const WRITES = ['balance', 'add-pay', 'add-item', 'edit-item', 'occ', 'txn', 'add-txn', 'import', 'examples', 'rm-examples', 'restore', 'erase', 'del-rule'];
+    if (MODE === 'cache' && WRITES.includes(a)) { toast('You are offline. Reconnect to make changes.'); return; }
+    switch (a) {
+      case 'tab': setTab(b.dataset.tab); break;
+      case 'close': closeSheet(); break;
+      case 'day': {
+        UI.sel = d; render();
+        if (window.innerWidth < 1000) {
+          const p = $('#day-panel');
+          if (p) {
+            const r = p.getBoundingClientRect();
+            if (r.top > window.innerHeight - 120) window.scrollBy({ top: r.top - window.innerHeight + 240, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+          }
+        }
+        break;
+      }
+      case 'goto': { const y = P.ymd(d); UI.ym = { y: y.y, m: y.m }; UI.sel = d; UI.tab = 'cal'; render(); break; }
+      case 'mprev': case 'mnext': {
+        let { y, m } = UI.ym; m += a === 'mnext' ? 1 : -1;
+        if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
+        UI.ym = { y, m }; UI.sel = P.fromYMD(y, m, 1) === P.fromYMD(P.ymd(P.todayN()).y, P.ymd(P.todayN()).m, 1) ? P.todayN() : P.fromYMD(y, m, 1);
+        render(); break;
+      }
+      case 'today': { const t = P.todayN(), y = P.ymd(t); UI.ym = { y: y.y, m: y.m }; UI.sel = t; render(); break; }
+      case 'aprev': case 'anext': {
+        let { y, m } = UI.actYM; m += a === 'anext' ? 1 : -1;
+        if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
+        UI.actYM = { y, m }; render(); break;
+      }
+      case 'balance': openBalance(); break;
+      case 'add-pay': openItem(null, { kind: 'income', paycheck: true, name: 'Paycheck', freq: 'w2' }); break;
+      case 'add-item': openItem(null, { kind: b.dataset.kind || 'bill', start: d }); break;
+      case 'edit-item': if (S.items[b.dataset.id]) openItem(S.items[b.dataset.id]); break;
+      case 'occ': openOcc(b.dataset.key); break;
+      case 'txn': if (S.txns[b.dataset.id]) openTxn(S.txns[b.dataset.id]); break;
+      case 'add-txn': openTxn(null, { date: d, item: b.dataset.item || null }); break;
+      case 'import': openCSV(); break;
+      case 'toggle-past': UI.showPast = !UI.showPast; render(); break;
+      case 'examples': loadExamples(); break;
+      case 'rm-examples': removeExamples(); break;
+      case 'export': exportData(); break;
+      case 'restore': openRestore(); break;
+      case 'erase': confirmSheet('Erase everything?', 'This deletes your balance, every scheduled item and every transaction on all your devices. It cannot be undone.', 'Erase everything', () => { replaceAll({}).then(() => toast('Everything erased.')); }); break;
+      case 'del-rule': saveSettings({ rules: { [b.dataset.k]: null } }); break;
+      case 'setup-sync': openSyncSetup(); break;
+      case 'reload': location.reload(); break;
+      case 'sign-in': openSignIn(false); break;
+      case 'sign-out': signOutNow(); break;
+      case 'connect-device': openConnectDevice(); break;
+      case 'remove-sync': removeSync(); break;
+      case 'install': if (installEvt) { installEvt.prompt(); Promise.resolve(installEvt.userChoice).finally(() => { installEvt = null; render(); }); } break;
+    }
+    if (inSheet && a !== 'close' && ['txn', 'edit-item', 'add-txn'].includes(a)) { /* the new sheet replaced the old one */ }
+  });
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if ((t.id === 'set-low' || t.id === 'set-ws') && MODE === 'cache') { toast('You are offline. Reconnect to make changes.'); return; }
+    if (t.id === 'set-low') { const v = P.parseAmount(t.value); if (isFinite(v)) { saveSettings({ low: P.round2(v) }); toast('Saved.'); } }
+    if (t.id === 'set-ws') saveSettings({ weekStart: +t.value });
+  });
+  $('#view').addEventListener('focusout', () => { setTimeout(() => { if (deferred) render(); }, 0); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+  let lastDay = P.todayN();
+  setInterval(() => { const t = P.todayN(); if (t !== lastDay) { lastDay = t; changed(); } }, 60000);
+
+  boot();
+})();
+</script>
+</body>
+</html>

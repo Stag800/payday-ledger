@@ -1,0 +1,89 @@
+PAYDAY LEDGER: SETUP GUIDE
+==========================
+
+You will do three things, once:
+  A. Put the app online for free with GitHub Pages (about 5 minutes, on your computer)
+  B. Turn on sync with your own free Firebase project (about 10 minutes, on your computer)
+  C. Install it on your Android phone and your computer (2 minutes)
+
+After that, you open Payday Ledger from its own icon. No Claude needed.
+
+
+A. PUT THE APP ONLINE (GitHub Pages, free)
+------------------------------------------
+1. Unzip payday-ledger.zip on your computer. You get a folder with index.html,
+   sw.js, manifest.webmanifest, four icon images and this guide.
+2. Create a free account at https://github.com (skip this if you have one).
+3. Click the + button at the top right, then "New repository".
+   - Repository name: payday-ledger
+   - Leave it Public (your budget data is NOT stored here, only the app's code)
+   - Click "Create repository".
+4. On the new, empty repository page, click the link "uploading an existing file".
+5. Open the unzipped folder, select ALL the files inside it, and drag them onto the
+   GitHub page. Wait for them to upload, then click "Commit changes".
+6. Click the "Settings" tab of the repository, then "Pages" in the left menu.
+   Under "Build and deployment":
+   - Source: Deploy from a branch
+   - Branch: main, folder: / (root)
+   - Click Save.
+7. Wait 1 to 2 minutes and refresh that page. It shows your address, like:
+       https://YOUR-GITHUB-NAME.github.io/payday-ledger/
+   Open it in Chrome. That is your app.
+
+
+B. TURN ON SYNC (Firebase, free)
+--------------------------------
+In the app on your computer, go to Settings and tap "Set up sync".
+The app walks you through these steps and shows the exact text to copy:
+1. Create a project at https://console.firebase.google.com
+2. Authentication: Get started, then turn on Email/Password.
+3. Authentication, Settings, Authorized domains: add YOUR-GITHUB-NAME.github.io
+4. Firestore: Create database (Standard edition, a nearby location, production mode).
+5. Firestore, Rules tab: paste the rules the app shows, then Publish.
+6. Project settings, Your apps, the </> (web) button: register the app and copy
+   the firebaseConfig block into the app.
+Then create your sync email and password in the app. Anything you already entered
+on that device moves into sync automatically.
+
+The free Firebase plan (Spark) is far more than one person's budget needs.
+
+
+C. INSTALL ON YOUR PHONE AND COMPUTER
+-------------------------------------
+Computer: in Chrome or Edge, click the install icon at the right end of the
+address bar (or the browser menu, then "Install Payday Ledger").
+
+Android phone:
+1. In the app on your computer, go to Settings and tap "Add your phone or another
+   device". Copy the link and email or text it to yourself.
+2. Open the link on your phone in Chrome. It connects to your Firebase project.
+3. Sign in with the same email and password.
+4. In Chrome's menu (three dots), tap "Add to Home screen" or "Install app".
+
+It works offline too. Changes you make without a connection upload when you
+are back online.
+
+
+MOVING DATA FROM THE CLAUDE VERSION
+-----------------------------------
+If you already entered things in the version inside Claude, open it there,
+go to Settings, and tap "Export backup". Then in this app, Settings,
+"Restore from backup", and choose that file.
+
+
+UPDATING THE APP LATER
+----------------------
+If you get a newer version, open your payday-ledger repository on GitHub,
+click "Add file", then "Upload files", drag in the new files, and commit.
+Your app picks up the new version the next time it opens online.
+Your budget lives in Firebase, so updating the app never touches your data.
+
+
+SCHEDULE TIPS
+-------------
+- Every 10 days: Schedule, Add, How often: "Every X days (like every 10 days)",
+  then enter 10 and pick the date of your next payment.
+- Every 3 weeks, every week, the 2nd Tuesday, twice a month, yearly: all in the
+  same "How often" list.
+- A one-time change (a bigger bill this month, a skipped payment, paying from an
+  earlier paycheck): tap that date on the Calendar or Paychecks page.

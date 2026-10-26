@@ -1,0 +1,16 @@
+{
+  "name": "Payday Ledger",
+  "short_name": "Payday",
+  "description": "Paycheck planning and a daily balance calendar for every bill and budget.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E9EEE8",
+  "theme_color": "#2343B0",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
