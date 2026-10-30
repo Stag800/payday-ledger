@@ -1,5 +1,5 @@
 /* Payday Ledger service worker: keeps the app working offline. */
-const VERSION = 'payday-v2';
+const VERSION = 'payday-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', event => {

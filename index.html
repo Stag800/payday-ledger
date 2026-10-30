@@ -121,6 +121,8 @@ main { padding-block: var(--s4) calc(88px + env(safe-area-inset-bottom, 0px)); p
 .banner { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--r); background: var(--warn-soft); color: var(--ink); margin-bottom: var(--s4); font-size: var(--t-sm); }
 .banner strong { color: var(--warn); }
 .banner .btn { margin-left: auto; }
+.banner .row { margin-left: auto; }
+.banner .row .btn { margin-left: 0; }
 .empty { text-align: center; padding: var(--s6) var(--s4); color: var(--muted); }
 .empty h2 { color: var(--ink); font-size: var(--t-lg); margin-bottom: var(--s2); }
 .empty p { max-width: 46ch; margin: 0 auto var(--s4); }
@@ -992,7 +994,11 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
   async function loadFirebase(cfg) {
     const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 20000));
     const [A, Au, F] = await Promise.race([Promise.all(['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js'].map(f => importer(FB_URL + f))), timeout]);
-    const app = A.initializeApp(cfg, 'payday-' + cfg.projectId + '-' + Date.now());
+    // Firebase remembers who is signed in under the app's name, so the name must be the same on every load.
+    const name = 'payday-' + cfg.projectId;
+    let app = A.getApps().find(a => a.name === name);
+    if (app && (app.options.apiKey !== cfg.apiKey || app.options.appId !== cfg.appId)) { try { await A.deleteApp(app); } catch (e) { /* ignore */ } app = null; }
+    if (!app) app = A.initializeApp(cfg, name);
     const auth = Au.getAuth(app);
     let db;
     try { db = F.initializeFirestore(app, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) }); }
@@ -1008,18 +1014,31 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     }
     const cfg = getCfg();
     if (!cfg) { startLocal(); return; }
-    try { FBX = await loadFirebase(cfg); }
+    let fx;
+    try { fx = await loadFirebase(cfg); }
     catch (e) { fallbackOffline(); return; }
-    let first = true;
-    FBX.Au.onAuthStateChanged(FBX.auth, u => {
-      if (u) {
-        if (!USER || USER.uid !== u.uid) { USER = { uid: u.uid, email: u.email || '' }; startSync(u.uid); }
-      } else {
-        USER = null; stopSync(); startLocal();
-        if (first && pendingSetupMsg === 'signin') setTimeout(openSignIn, 50);
-      }
-      first = false; pendingSetupMsg = '';
-    });
+    attachFirebase(fx);
+  }
+
+  // Older versions saved a separate sign-in under a new name on every load. Remove those leftovers.
+  function cleanOldSignIns(cfg) {
+    try {
+      if (!cfg || !window.indexedDB) return;
+      const prefix = 'firebase:authUser:' + cfg.apiKey + ':payday-' + cfg.projectId + '-';
+      const req = indexedDB.open('firebaseLocalStorageDb');
+      req.onupgradeneeded = () => { try { req.transaction.abort(); } catch (e) { /* ignore */ } };
+      req.onerror = () => {};
+      req.onsuccess = () => {
+        const db = req.result;
+        try {
+          if (!db.objectStoreNames.contains('firebaseLocalStorage')) { db.close(); return; }
+          const tx = db.transaction('firebaseLocalStorage', 'readwrite');
+          const cur = tx.objectStore('firebaseLocalStorage').openCursor();
+          cur.onsuccess = () => { const c = cur.result; if (!c) return; if (String(c.key).indexOf(prefix) === 0) c.delete(); c.continue(); };
+          tx.oncomplete = tx.onabort = tx.onerror = () => db.close();
+        } catch (e) { try { db.close(); } catch (e2) { /* ignore */ } }
+      };
+    } catch (e) { /* ignore */ }
   }
 
   function fallbackOffline() {
@@ -1067,7 +1086,7 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
   function startSync(uid) {
     stopSync();
     MODE = 'sync';
-    Store.loaded = { s: false, i: false, m: false }; Store.migrated = false; Store.failed = false; Store.offline = false;
+    Store.loaded = { s: false, i: false, m: false }; Store.migrated = false; Store.failed = false; Store.offline = false; Store.leftover = null;
     S.settings = {}; S.items = {}; S.txns = {};
     const F = FBX.F;
     const base = F.doc(FBX.db, 'users', uid);
@@ -1104,10 +1123,53 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
   function maybeMigrate() {
     const empty = !S.settings.anchor && !Object.keys(S.items).length && !Object.keys(S.txns).length;
     const raw = lsGet(LS_KEY);
-    if (!empty || !raw) return;
+    if (!raw) return;
     let d; try { d = JSON.parse(raw); } catch (e) { return; }
-    if (!d || !((d.settings && d.settings.anchor) || (d.items && Object.keys(d.items).length))) return;
-    replaceAll(d).then(() => { lsDel(LS_KEY); toast('Moved the budget saved on this device into your synced account.'); });
+    if (!d) return;
+    if (empty) {
+      if (!((d.settings && d.settings.anchor) || (d.items && Object.keys(d.items).length))) return;
+      replaceAll(d).then(() => { lsDel(LS_KEY); toast('Moved the budget saved on this device into your synced account.'); });
+      return;
+    }
+    Store.leftover = findLeftover(d);
+    if (!Store.leftover) lsDel(LS_KEY);
+  }
+  // Entries saved on this device while signed out that the synced budget does not have yet.
+  function findLeftover(d) {
+    const its = Object.values(d.items || {}).filter(i => i && i.id && !i.example && !S.items[i.id]);
+    const txs = Object.values(d.txns || {}).filter(t => t && t.id && t.date && !S.txns[t.id]);
+    const la = d.settings && d.settings.anchor, ca = S.settings.anchor;
+    const anchor = la && !la.example && (!ca || (+la.setAt || 0) > (+ca.setAt || 0)) ? la : null;
+    const rules = {};
+    const lr = (d.settings && d.settings.rules) || {}, cr = S.settings.rules || {};
+    for (const k in lr) if (lr[k] && !cr[k]) rules[k] = lr[k];
+    if (!its.length && !txs.length && !anchor) return null;
+    return { its, txs, anchor, rules };
+  }
+  function mergeLeftover() {
+    const L = Store.leftover;
+    if (!L || MODE !== 'sync') return;
+    for (const it of L.its) saveItem(it);
+    if (L.txs.length) saveTxns(L.txs);
+    const patch = {};
+    if (L.anchor) patch.anchor = L.anchor;
+    if (Object.keys(L.rules).length) patch.rules = L.rules;
+    if (Object.keys(patch).length) saveSettings(patch);
+    Store.leftover = null; lsDel(LS_KEY);
+    const parts = [];
+    if (L.its.length) parts.push(L.its.length + (L.its.length === 1 ? ' scheduled item' : ' scheduled items'));
+    if (L.txs.length) parts.push(L.txs.length + (L.txs.length === 1 ? ' transaction' : ' transactions'));
+    if (L.anchor) parts.push('your newer bank balance');
+    toast('Added ' + parts.join(' and ') + ' to your synced budget.');
+  }
+  function leftoverBanner() {
+    const L = Store.leftover;
+    if (!L || MODE !== 'sync') return '';
+    const parts = [];
+    if (L.its.length) parts.push(`${L.its.length} scheduled ${L.its.length === 1 ? 'item' : 'items'} (${L.its.slice(0, 3).map(i => esc(i.name)).join(', ')}${L.its.length > 3 ? '…' : ''})`);
+    if (L.txs.length) parts.push(`${L.txs.length} ${L.txs.length === 1 ? 'transaction' : 'transactions'}`);
+    if (L.anchor) parts.push(`a bank balance of ${fm(+L.anchor.balance || 0)}`);
+    return `<div class="banner leftover"><span><strong>Saved on this device only.</strong> While you were signed out, you added ${parts.join(' and ')}. Add ${L.its.length + L.txs.length + (L.anchor ? 1 : 0) === 1 ? 'it' : 'them'} to your synced budget?</span><span class="row"><button class="btn sm" data-act="discard-local">Discard</button><button class="btn sm primary" data-act="merge-local">Add to synced budget</button></span></div>`;
   }
 
   function canWrite() {
@@ -1270,8 +1332,9 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
   }
 
   function exBanner() {
-    if (!items().some(i => i.example)) return '';
-    return `<div class="banner"><span><strong>Example budget.</strong> Sample numbers so you can look around. Remove them when you are ready to enter your own.</span><button class="btn sm" data-act="rm-examples">Remove examples</button></div>`;
+    const lo = leftoverBanner();
+    if (!items().some(i => i.example)) return lo;
+    return lo + `<div class="banner"><span><strong>Example budget.</strong> Sample numbers so you can look around. Remove them when you are ready to enter your own.</span><button class="btn sm" data-act="rm-examples">Remove examples</button></div>`;
   }
 
   // ---------------- Calendar ----------------
@@ -2153,6 +2216,7 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     FBX = fx;
     let first = true;
     FBX.Au.onAuthStateChanged(FBX.auth, u => {
+      if (first) cleanOldSignIns(FBX.app && FBX.app.options);
       if (u) {
         if (!USER || USER.uid !== u.uid) { USER = { uid: u.uid, email: u.email || '' }; startSync(u.uid); }
       } else {
@@ -2360,6 +2424,8 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
       case 'erase': confirmSheet('Erase everything?', 'This deletes your balance, every scheduled item and every transaction on all your devices. It cannot be undone.', 'Erase everything', () => { replaceAll({}).then(() => toast('Everything erased.')); }); break;
       case 'del-rule': saveSettings({ rules: { [b.dataset.k]: null } }); break;
       case 'setup-sync': openSyncSetup(); break;
+      case 'merge-local': mergeLeftover(); break;
+      case 'discard-local': confirmSheet('Discard these entries?', 'They were saved only on this device while you were signed out. Your synced budget is not affected.', 'Discard', () => { Store.leftover = null; lsDel(LS_KEY); render(); toast('Discarded.'); }); break;
       case 'reload': location.reload(); break;
       case 'sign-in': openSignIn(false); break;
       case 'sign-out': signOutNow(); break;
