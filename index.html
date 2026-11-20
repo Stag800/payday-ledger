@@ -25,6 +25,7 @@ img { max-width: 100%; }
   --ink: #15231C; --muted: #56675D; --faint: #869489;
   --accent: #2343B0; --accent-ink: #FFFFFF; --accent-soft: #DCE3F8;
   --in: #1B7443; --in-soft: #D8EEDF; --out: #AF2F27; --out-soft: #F5DDD9; --warn: #93600F; --warn-soft: #F4E6CB;
+  --save: #0B6E78; --save-soft: #D2ECEE;
   --scrim: rgba(13, 22, 17, .42);
   --shadow: 0 1px 0 rgba(21, 35, 28, .05), 0 10px 28px -14px rgba(21, 35, 28, .28);
   --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
@@ -39,6 +40,7 @@ img { max-width: 100%; }
   --ink: #E2EBE4; --muted: #9AACA0; --faint: #6E8075;
   --accent: #8FA8FF; --accent-ink: #0D1411; --accent-soft: #1E2950;
   --in: #62CC90; --in-soft: #16301F; --out: #FF8D80; --out-soft: #3A1B18; --warn: #E8B45C; --warn-soft: #362A13;
+  --save: #5CC7D0; --save-soft: #12302F;
   --scrim: rgba(0, 0, 0, .6);
   --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 30px -14px rgba(0, 0, 0, .7);
   color-scheme: dark;
@@ -48,6 +50,7 @@ img { max-width: 100%; }
   --ink: #E2EBE4; --muted: #9AACA0; --faint: #6E8075;
   --accent: #8FA8FF; --accent-ink: #0D1411; --accent-soft: #1E2950;
   --in: #62CC90; --in-soft: #16301F; --out: #FF8D80; --out-soft: #3A1B18; --warn: #E8B45C; --warn-soft: #362A13;
+  --save: #5CC7D0; --save-soft: #12302F;
   --scrim: rgba(0, 0, 0, .6);
   --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 12px 30px -14px rgba(0, 0, 0, .7);
   color-scheme: dark;
@@ -105,6 +108,16 @@ main { padding-block: var(--s4) calc(88px + env(safe-area-inset-bottom, 0px)); p
 .page-head .acts { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
 @media (max-width: 520px) { .page-head { grid-template-columns: minmax(0, 1fr); } .page-head .acts { justify-content: flex-start; } }
 .p-why { margin: -4px 0 0; font-size: var(--t-xs); color: var(--muted); }
+.addback { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); padding: 10px 12px; border-radius: var(--rs); background: var(--save-soft); font-size: var(--t-sm); margin: var(--s2) 0; }
+.addback p { margin: 0; flex: 1 1 220px; min-width: 0; }
+.addback b { color: var(--save); }
+.hist { display: grid; border-top: 1px solid var(--line-soft); }
+.hrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s3); align-items: baseline; padding: 8px 2px; border: 0; border-bottom: 1px solid var(--line-soft); background: none; text-align: left; font-size: var(--t-sm); }
+.hrow:hover { background: var(--line-soft); }
+.hrow .num { font-family: var(--num); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.hrow .muted { grid-column: 1 / -1; font-size: var(--t-xs); }
+.preview b.in { color: var(--in); } .preview b.out { color: var(--out); }
+.panel-acts .btn svg { width: 14px; height: 14px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--raise); padding: 8px 14px; font-weight: 600; font-size: var(--t-sm); white-space: nowrap; }
 .btn:hover { border-color: var(--faint); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -117,6 +130,7 @@ main { padding-block: var(--s4) calc(88px + env(safe-area-inset-bottom, 0px)); p
 .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); }
 .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--line-soft); color: var(--muted); white-space: nowrap; letter-spacing: .01em; }
 .pill.in { background: var(--in-soft); color: var(--in); } .pill.out { background: var(--out-soft); color: var(--out); }
+.pill.sv { background: var(--save-soft); color: var(--save); } .pill.bk { background: var(--line-soft); color: var(--ink); }
 .pill.warn { background: var(--warn-soft); color: var(--warn); } .pill.acc { background: var(--accent-soft); color: var(--accent); }
 .banner { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--r); background: var(--warn-soft); color: var(--ink); margin-bottom: var(--s4); font-size: var(--t-sm); }
 .banner strong { color: var(--warn); }
@@ -174,6 +188,7 @@ main { padding-block: var(--s4) calc(88px + env(safe-area-inset-bottom, 0px)); p
 .cell .dots { display: flex; gap: 2px; margin-top: 4px; flex-wrap: wrap; }
 .dot { width: 6px; height: 6px; border-radius: 50%; }
 .dot.in { background: var(--in); } .dot.out { background: var(--out); } .dot.sp { background: var(--accent); } .dot.tx { background: var(--faint); }
+.dot.sv { background: var(--save); } .dot.bk { background: var(--ink); }
 .cell .cb { margin-top: auto; font-family: var(--num); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 500; letter-spacing: -.01em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: clip; text-align: right; }
 .cell.past { background: var(--paper); }
 .cell.past .dn { color: var(--faint); }
@@ -201,6 +216,7 @@ main { padding-block: var(--s4) calc(88px + env(safe-area-inset-bottom, 0px)); p
 .entry:hover { background: var(--line-soft); }
 .entry .bar { align-self: stretch; border-radius: 2px; background: var(--faint); }
 .entry .bar.in { background: var(--in); } .entry .bar.out { background: var(--out); } .entry .bar.sp { background: var(--accent); }
+.entry .bar.sv { background: var(--save); } .entry .bar.bk { background: var(--ink); }
 .entry .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .entry .mt { font-size: var(--t-xs); color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin-top: 2px; }
 .entry .am { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
@@ -522,12 +538,41 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     return out;
   }
 
+  // Every bank balance the person entered, oldest first. settings.anchor (the latest one) is also read,
+  // because older versions of the app only know that field.
+  function balancePoints(st) {
+    const s = (st && st.settings) || {};
+    const byDate = new Map();
+    const put = (date, e) => {
+      if (!e || !date || !isFinite(dn(date)) || e.balance == null || e.balance === '' || !isFinite(+e.balance)) return;
+      const d = dn(date);
+      const p = { date: d, balance: +e.balance, setAt: +e.setAt || 0, pending: new Set(e.pending || []), example: !!e.example, set: true };
+      const cur = byDate.get(d);
+      if (!cur || p.setAt > cur.setAt) byDate.set(d, p);
+    };
+    const b = s.balances || {};
+    for (const k in b) put(k, b[k]);
+    if (s.anchor && s.anchor.date) put(s.anchor.date, s.anchor);
+    return [...byDate.values()].sort((a, c) => a.date - c.date);
+  }
   function anchorOf(st, today) {
-    const a = st.settings && st.settings.anchor;
-    if (a && a.date && isFinite(dn(a.date))) {
-      return { date: dn(a.date), balance: +a.balance || 0, setAt: a.setAt || 0, pending: new Set(a.pending || []), set: true };
-    }
+    const pts = balancePoints(st);
+    if (pts.length) return pts[pts.length - 1];
     return { date: today - 1, balance: 0, setAt: 0, pending: new Set(), set: false };
+  }
+
+  // Planned moves to or from savings, one per day: either "set the balance to X" (target) or a fixed amount.
+  function movesOf(st) {
+    const m = (st && st.settings && st.settings.moves) || {}, out = new Map();
+    const num = v => v != null && v !== '' && isFinite(+v);
+    for (const k in m) {
+      const e = m[k];
+      if (!e || !isFinite(dn(k))) continue;
+      if (!num(e.target) && !num(e.amount)) continue;
+      const d = dn(k);
+      out.set(d, { date: d, target: num(e.target) ? +e.target : null, amount: num(e.target) ? null : +e.amount, setAt: +e.setAt || 0 });
+    }
+    return out;
   }
 
   // Is this transaction NOT yet reflected in the anchor balance?
@@ -547,7 +592,7 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
    */
   function build(st, opts) {
     const today = opts.today != null ? opts.today : todayN();
-    const A = anchorOf(st, today);
+    const A = opts.anchor || anchorOf(st, today);
     const from = Math.min(opts.from != null ? opts.from : today, A.date);
     const to = Math.max(opts.to != null ? opts.to : today + 120, A.date + 1);
     const gFrom = from - 400, gTo = to + 400;
@@ -602,16 +647,37 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     occs.sort((a, b) => a.date - b.date || a.sign - b.sign);
 
     // projection
-    const H = to + 400;
+    const H = opts.horizon != null ? Math.max(opts.horizon, to) : to + 400;
     const n = H - A.date + 1;
     const delta = new Float64Array(n);
     const add = (d, v) => { if (d >= A.date && d <= H) delta[d - A.date] += v; };
     for (const o of occs) if (o.count) add(o.countDate, o.count);
     const counted = new Set();
     for (const t of txns) if (afterAnchor(t, A)) { add(dn(t.date), +t.amount); counted.add(t.id); }
+    // Planned moves: a fixed amount counts like any other entry; "set balance to X" pins the end of that day.
+    const MV = movesOf(st);
+    const moveApplies = m => m.date > A.date || (m.date === A.date && m.setAt > A.setAt);
+    const tgt = new Map();
+    for (const m of MV.values()) {
+      if (!moveApplies(m)) continue;
+      if (m.target != null) tgt.set(m.date, m.target); else add(m.date, m.amount);
+    }
+    const adj = new Map();
     const bal = new Float64Array(n);
     let run = A.balance;
-    for (let i = 0; i < n; i++) { run += delta[i]; bal[i] = Math.round(run * 100) / 100; }
+    for (let i = 0; i < n; i++) {
+      run += delta[i];
+      const d = A.date + i;
+      if (tgt.has(d)) { const t = tgt.get(d); adj.set(d, Math.round((t - run) * 100) / 100); run = t; }
+      bal[i] = Math.round(run * 100) / 100;
+    }
+    function moveAt(d) {
+      const m = MV.get(d);
+      if (!m) return null;
+      const applied = moveApplies(m) && d <= H;
+      return Object.assign({}, m, { applied, delta: !applied ? 0 : m.target != null ? (adj.get(d) || 0) : m.amount });
+    }
+    const isTarget = d => tgt.has(d);
 
     function balAt(d) { if (d < A.date || d > H) return null; return bal[d - A.date]; }
     function occsIn(f, t) { return occs.filter(o => o.date >= f && o.date <= t); }
@@ -629,7 +695,76 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
       });
       return { occs: os, txns: ts };
     }
-    return { A, today, occs, txns, txById, balAt, occsIn, lowest, dayEntries, counted, H };
+    return { A, today, occs, txns, txById, balAt, occsIn, lowest, dayEntries, counted, H, moveAt, isTarget };
+  }
+
+  /**
+   * The whole ledger: the projection from the latest bank balance, plus, for earlier days,
+   * the projection from whichever bank balance came before them. Same shape as build().
+   */
+  function ledger(st, opts) {
+    opts = Object.assign({}, opts);
+    const today = opts.today != null ? opts.today : todayN();
+    opts.today = today;
+    const pts = balancePoints(st);
+    const main = build(st, opts);
+    const A = main.A;
+    const MV = movesOf(st);
+    const segs = new Map();
+    function idxBefore(d, strict) {
+      let k = -1;
+      for (let i = 0; i < pts.length; i++) { if (strict ? pts[i].date < d : pts[i].date <= d) k = i; else break; }
+      return k;
+    }
+    function seg(k) {
+      if (k >= pts.length - 1) return main;
+      if (!segs.has(k)) segs.set(k, build(st, { today, from: pts[k].date, to: pts[k + 1].date, horizon: pts[k + 1].date, anchor: pts[k] }));
+      return segs.get(k);
+    }
+    function ledFor(d) {
+      if (!A.set || d >= A.date) return main;
+      const k = idxBefore(d, false);
+      return k < 0 ? null : seg(k);
+    }
+    function balAt(d) { const L = ledFor(d); return L ? L.balAt(d) : null; }
+    function lowest(f, t) {
+      let best = null;
+      for (let d = f; d <= t; d++) { const b = balAt(d); if (b == null) continue; if (best === null || b < best.bal) best = { date: d, bal: b }; }
+      return best;
+    }
+    function moveAt(d) {
+      const L = ledFor(d);
+      if (L) return L.moveAt(d);
+      const m = MV.get(d);
+      return m ? Object.assign({}, m, { applied: false, delta: 0 }) : null;
+    }
+    // A bank balance entered on day d, and how far it was from what the app expected.
+    function pointAt(d) {
+      const k = pts.findIndex(p => p.date === d);
+      if (k < 0) return null;
+      const expected = k > 0 ? seg(k - 1).balAt(d) : null;
+      const eod = seg(k).balAt(d);
+      return { point: pts[k], index: k, expected, eod, diff: expected == null || eod == null ? null : round2(eod - expected) };
+    }
+    // What the app expects at the end of day d, not counting a bank balance entered on d itself.
+    function expectedAt(d) {
+      const k = idxBefore(d, true);
+      return k < 0 ? null : seg(k).balAt(d);
+    }
+    // First day in [from, to] that ends below floor, and how much to add by then so no later day does.
+    // A planned "set balance to" day resets the balance, so the search stops there.
+    function shortfall(from, to, floor) {
+      floor = floor || 0;
+      let first = null, min = 0;
+      for (let d = from; d <= to; d++) {
+        const b = balAt(d);
+        if (b == null) continue;
+        if (first === null) { if (b < floor - 0.004) { first = d; min = b; } }
+        else { const L = ledFor(d); if (L && L.isTarget(d)) break; if (b < min) min = b; }
+      }
+      return first === null ? null : { date: first, amount: round2(floor - min) };
+    }
+    return Object.assign({}, main, { main, points: pts, balAt, lowest, moveAt, pointAt, expectedAt, shortfall, ledFor });
   }
 
   // ---------- pay periods (Ramsey-style paycheck planning) ----------
@@ -663,8 +798,10 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     const otherOut = other.reduce((a, t) => a + (+t.amount < 0 ? -t.amount : 0), 0);
     const otherIn = other.reduce((a, t) => a + (+t.amount > 0 ? +t.amount : 0), 0);
     const low = led.lowest(s, e);
+    const moves = [];
+    if (led.moveAt) for (let d = s; d <= e; d++) { const m = led.moveAt(d); if (m) moves.push(m); }
     return {
-      start: s, end: e, next, inc, bills, spend, other, income, billTotal, spendTotal, otherOut, otherIn,
+      start: s, end: e, next, inc, bills, spend, other, moves, income, billTotal, spendTotal, otherOut, otherIn,
       left: round2(income - billTotal - spendTotal),
       balStart: led.balAt(s - 1), balEnd: led.balAt(e), low
     };
@@ -882,7 +1019,7 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
 
   const api = {
     DAY, fromYMD, dn, ds, ymd, wday, dim, todayN, addMonths, nthWeekday, normRule, rawDates, adjust, itemOccs,
-    nominalPeriod, perMonth, anchorOf, afterAnchor, build, payDates, periods, periodDetail, describe, nextDates,
+    nominalPeriod, perMonth, balancePoints, movesOf, anchorOf, afterAnchor, build, ledger, payDates, periods, periodDetail, describe, nextDates,
     normDesc, ruleKey, nameHit, suggestItem, suggestMatch, parseCSV, parseAmount, parseDate, detectDateFormat,
     guessColumns, txnHash, liveItems, liveTxns, WD, MO, ord, round2
   };
@@ -957,7 +1094,7 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     if (UI.ym) { const f = P.fromYMD(UI.ym.y, UI.ym.m, 1); from = Math.min(from, f - 7); to = Math.max(to, f + 45); }
     const k = VER + ':' + T + ':' + from + ':' + to;
     if (LED && LKEY === k) return LED;
-    LED = P.build(S, { today: T, from, to }); LKEY = k;
+    LED = P.ledger(S, { today: T, from, to }); LKEY = k;
     return LED;
   }
   function changed() { VER++; scheduleRender(); }
@@ -1062,6 +1199,7 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     S.settings = {}; S.items = {}; S.txns = {};
     const raw = lsGet(LS_KEY);
     if (raw) { try { const d = JSON.parse(raw); S.settings = d.settings || {}; S.items = d.items || {}; S.txns = d.txns || {}; } catch (e) { /* ignore */ } }
+    adoptAnchor();
     syncChip(); changed();
   }
   let lsTimer = null;
@@ -1116,18 +1254,19 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
   function afterSnap() {
     if (isReady()) {
       if (!Store.migrated) { Store.migrated = true; maybeMigrate(); }
+      adoptAnchor();
       persistCache();
     }
     syncChip(); changed();
   }
   function maybeMigrate() {
-    const empty = !S.settings.anchor && !Object.keys(S.items).length && !Object.keys(S.txns).length;
+    const empty = !P.balancePoints(S).length && !Object.keys(S.items).length && !Object.keys(S.txns).length;
     const raw = lsGet(LS_KEY);
     if (!raw) return;
     let d; try { d = JSON.parse(raw); } catch (e) { return; }
     if (!d) return;
     if (empty) {
-      if (!((d.settings && d.settings.anchor) || (d.items && Object.keys(d.items).length))) return;
+      if (!(P.balancePoints(d).length || (d.items && Object.keys(d.items).length))) return;
       replaceAll(d).then(() => { lsDel(LS_KEY); toast('Moved the budget saved on this device into your synced account.'); });
       return;
     }
@@ -1138,28 +1277,30 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
   function findLeftover(d) {
     const its = Object.values(d.items || {}).filter(i => i && i.id && !i.example && !S.items[i.id]);
     const txs = Object.values(d.txns || {}).filter(t => t && t.id && t.date && !S.txns[t.id]);
-    const la = d.settings && d.settings.anchor, ca = S.settings.anchor;
-    const anchor = la && !la.example && (!ca || (+la.setAt || 0) > (+ca.setAt || 0)) ? la : null;
+    const cloudPts = new Map(P.balancePoints(S).map(p => [p.date, p]));
+    const points = P.balancePoints(d).filter(p => !p.example && (!cloudPts.has(p.date) || p.setAt > cloudPts.get(p.date).setAt));
+    const cloudMv = P.movesOf(S);
+    const moves = [...P.movesOf(d).values()].filter(m => !cloudMv.has(m.date) || m.setAt > cloudMv.get(m.date).setAt);
     const rules = {};
     const lr = (d.settings && d.settings.rules) || {}, cr = S.settings.rules || {};
     for (const k in lr) if (lr[k] && !cr[k]) rules[k] = lr[k];
-    if (!its.length && !txs.length && !anchor) return null;
-    return { its, txs, anchor, rules };
+    if (!its.length && !txs.length && !points.length && !moves.length) return null;
+    return { its, txs, points, moves, rules };
   }
   function mergeLeftover() {
     const L = Store.leftover;
     if (!L || MODE !== 'sync') return;
     for (const it of L.its) saveItem(it);
     if (L.txs.length) saveTxns(L.txs);
-    const patch = {};
-    if (L.anchor) patch.anchor = L.anchor;
-    if (Object.keys(L.rules).length) patch.rules = L.rules;
-    if (Object.keys(patch).length) saveSettings(patch);
+    for (const p of L.points) setPoint(P.ds(p.date), pointEntry(p));
+    for (const m of L.moves) setMove(P.ds(m.date), { target: m.target, amount: m.amount, setAt: m.setAt });
+    if (Object.keys(L.rules).length) saveSettings({ rules: L.rules });
     Store.leftover = null; lsDel(LS_KEY);
     const parts = [];
     if (L.its.length) parts.push(L.its.length + (L.its.length === 1 ? ' scheduled item' : ' scheduled items'));
     if (L.txs.length) parts.push(L.txs.length + (L.txs.length === 1 ? ' transaction' : ' transactions'));
-    if (L.anchor) parts.push('your newer bank balance');
+    if (L.points.length) parts.push(L.points.length + (L.points.length === 1 ? ' bank balance' : ' bank balances'));
+    if (L.moves.length) parts.push(L.moves.length + (L.moves.length === 1 ? ' planned savings move' : ' planned savings moves'));
     toast('Added ' + parts.join(' and ') + ' to your synced budget.');
   }
   function leftoverBanner() {
@@ -1168,8 +1309,31 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     const parts = [];
     if (L.its.length) parts.push(`${L.its.length} scheduled ${L.its.length === 1 ? 'item' : 'items'} (${L.its.slice(0, 3).map(i => esc(i.name)).join(', ')}${L.its.length > 3 ? '…' : ''})`);
     if (L.txs.length) parts.push(`${L.txs.length} ${L.txs.length === 1 ? 'transaction' : 'transactions'}`);
-    if (L.anchor) parts.push(`a bank balance of ${fm(+L.anchor.balance || 0)}`);
-    return `<div class="banner leftover"><span><strong>Saved on this device only.</strong> While you were signed out, you added ${parts.join(' and ')}. Add ${L.its.length + L.txs.length + (L.anchor ? 1 : 0) === 1 ? 'it' : 'them'} to your synced budget?</span><span class="row"><button class="btn sm" data-act="discard-local">Discard</button><button class="btn sm primary" data-act="merge-local">Add to synced budget</button></span></div>`;
+    if (L.points.length) parts.push(L.points.length === 1 ? `a bank balance of ${fm(L.points[0].balance)}` : `${L.points.length} bank balances`);
+    if (L.moves.length) parts.push(`${L.moves.length} planned savings ${L.moves.length === 1 ? 'move' : 'moves'}`);
+    return `<div class="banner leftover"><span><strong>Saved on this device only.</strong> While you were signed out, you added ${parts.join(' and ')}. Add ${L.its.length + L.txs.length + L.points.length + L.moves.length === 1 ? 'it' : 'them'} to your synced budget?</span><span class="row"><button class="btn sm" data-act="discard-local">Discard</button><button class="btn sm primary" data-act="merge-local">Add to synced budget</button></span></div>`;
+  }
+
+  // ----- bank balances and planned savings moves -----
+  // settings.balances keeps every bank balance by date; settings.anchor mirrors the newest for older app versions.
+  const pointEntry = p => ({ balance: p.balance, setAt: p.setAt, pending: [...(p.pending || [])], example: !!p.example });
+  function setPoint(dstr, entry) {
+    const next = clone(S.settings) || {};
+    next.balances = Object.assign({}, next.balances || {}, { [dstr]: entry });
+    if (!entry && next.anchor && next.anchor.date === dstr) next.anchor = null;
+    const pts = P.balancePoints({ settings: next });
+    const latest = pts.length ? pts[pts.length - 1] : null;
+    saveSettings({ balances: { [dstr]: entry }, anchor: latest ? Object.assign({ date: P.ds(latest.date) }, pointEntry(latest)) : null });
+  }
+  function setMove(dstr, entry) { saveSettings({ moves: { [dstr]: entry } }); }
+  // A balance written by an older version lives only in settings.anchor: copy it into the history once.
+  function adoptAnchor() {
+    if (MODE !== 'sync' && MODE !== 'local') return;
+    const a = S.settings.anchor;
+    if (!a || !a.date || a.balance == null || !isFinite(+a.balance)) return;
+    const have = (S.settings.balances || {})[a.date];
+    if (have && (+have.setAt || 0) >= (+a.setAt || 0)) return;
+    saveSettings({ balances: { [a.date]: { balance: +a.balance, setAt: +a.setAt || 0, pending: a.pending || [], example: !!a.example } } });
   }
 
   function canWrite() {
@@ -1393,19 +1557,22 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     const mark = (d, k) => { if (!marks.has(d)) marks.set(d, new Set()); marks.get(d).add(k); };
     for (const o of L.occsIn(first, first + D - 1)) if (o.status !== 'skipped') mark(o.date, barOf(o.item.kind));
     for (const t of L.txns) { const d = P.dn(t.date); if (d >= first && d < first + D && !t.match) mark(d, 'tx'); }
+    for (const p of L.points) if (p.date >= first && p.date < first + D) mark(p.date, 'bk');
+    for (let n = first; n < first + D; n++) if (L.moveAt(n)) mark(n, 'sv');
     const lw = lowMark();
     let cells = '';
     for (let i = 0; i < lead; i++) cells += '<div class="cell blank" aria-hidden="true"></div>';
     for (let d = 1; d <= D; d++) {
       const n = first + d - 1;
-      const b = n >= L.A.date ? L.balAt(n) : null;
+      const b = L.balAt(n);
       const cls = ['cell'];
       if (n < T) cls.push('past');
       if (n === T) cls.push('today');
       if (n === UI.sel) cls.push('sel');
-      if (b != null && b < 0) cls.push('neg'); else if (b != null && b < lw) cls.push('low');
+      const mvx = L.moveAt(n), pinned = mvx && mvx.applied && mvx.target != null && Math.abs(mvx.target - b) < 0.005;
+      if (b != null && b < 0 && !pinned) cls.push('neg'); else if (b != null && b < lw && !pinned) cls.push('low');
       const mk = marks.get(n);
-      const dots = mk ? ['in', 'out', 'sp', 'tx'].filter(k => mk.has(k)).map(k => `<i class="dot ${k}"></i>`).join('') : '';
+      const dots = mk ? ['bk', 'in', 'out', 'sp', 'sv', 'tx'].filter(k => mk.has(k)).map(k => `<i class="dot ${k}"></i>`).join('') : '';
       cells += `<button class="${cls.join(' ')}" data-act="day" data-d="${n}" aria-label="${fdL(n)}${b != null ? ', balance ' + fm(b) : ''}"><span class="dn">${d}</span><span class="dots">${dots}</span><span class="cb">${b != null ? fmC(b) : ''}</span></button>`;
     }
     const tail = (7 - ((lead + D) % 7)) % 7;
@@ -1416,22 +1583,68 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
       <button class="iconbtn" data-act="mprev" aria-label="Previous month">${svg('left')}</button>
       <button class="iconbtn" data-act="mnext" aria-label="Next month">${svg('right')}</button></div>
       <div class="wk">${wk}</div><div class="grid">${cells}</div>
-      <div class="legend"><span><i class="dot in"></i>Money in</span><span><i class="dot out"></i>Bill</span><span><i class="dot sp"></i>Spending budget</span><span><i class="dot tx"></i>Logged</span><span><i class="sw low"></i>Under ${fm(lw)}</span><span><i class="sw neg"></i>Below $0</span></div>`;
+      <div class="legend"><span><i class="dot in"></i>Money in</span><span><i class="dot out"></i>Bill</span><span><i class="dot sp"></i>Spending budget</span><span><i class="dot sv"></i>Savings move</span><span><i class="dot bk"></i>Bank balance</span><span><i class="dot tx"></i>Logged</span><span><i class="sw low"></i>Under ${fm(lw)}</span><span><i class="sw neg"></i>Below $0</span></div>`;
   }
 
+  // The pay period around day d: from the payday on or before it to the day before the next one.
+  function payWindow(L, d) {
+    const pays = P.payDates(L);
+    let start = null, next = null;
+    for (const x of pays) { if (x <= d) start = x; else { next = x; break; } }
+    return { start: start == null ? d : start, end: next == null ? d + 31 : next - 1, next };
+  }
+  function addBackNote(L, from, to, hasNext) {
+    const sf = L.shortfall(from, to, 0);
+    if (!sf) return '';
+    return `<div class="addback"><p><b>Add ${fm(sf.amount)} from savings by ${fdW(sf.date)}</b> to keep every day ${hasNext ? 'until your next payday' : 'through ' + fdS(to)} at $0 or more.</p><button class="btn sm" data-act="plan-add" data-d="${sf.date}" data-amt="${sf.amount}">Plan it</button></div>`;
+  }
   function dayPanel(L, d) {
-    const e = L.dayEntries(d);
-    const b = d >= L.A.date ? L.balAt(d) : null;
+    const T = L.today;
+    const LD = L.ledFor(d) || L;
+    const e = LD.dayEntries(d);
+    const b = L.balAt(d);
     let rows = '';
+    const pt = L.pointAt(d);
+    if (pt) rows += pointRow(pt);
     for (const o of e.occs) rows += occRow(o, L, d, false);
-    for (const t of e.txns) rows += txnRow(t, L, false);
-    const tag = d === L.today ? 'Today' : d < L.today ? 'Past' : 'Ahead';
-    const eod = b != null
-      ? `<div class="eod"><span class="muted">End-of-day balance</span><span class="v ${b < 0 ? 'out' : b < lowMark() ? 'warn' : ''}">${fm(b)}</span></div>`
-      : `<div class="eod"><span class="muted">Before your balance date (${fdS(L.A.date)})</span><span></span></div>`;
-    return `<div class="eyebrow">${tag}</div><h3>${fdL(d)}</h3>${eod}` +
-      (rows ? `<div class="reg">${rows}</div>` : '<p class="note">Nothing scheduled or logged on this day.</p>') +
-      `<div class="panel-acts"><button class="btn primary" data-act="add-txn" data-d="${d}">${svg('plus')}Log spending</button><button class="btn" data-act="add-item" data-d="${d}">Schedule something</button></div>`;
+    for (const t of e.txns) rows += txnRow(t, LD, false);
+    const mv = L.moveAt(d);
+    if (mv) rows += moveRow(mv, L, false);
+    const tag = d === T ? 'Today' : d < T ? 'Past' : 'Ahead';
+    let eod;
+    const pinned = mv && mv.applied && mv.target != null && b != null && Math.abs(mv.target - b) < 0.005;
+    if (b != null) eod = `<div class="eod"><span class="muted">End-of-day balance</span><span class="v ${pinned ? '' : b < 0 ? 'out' : b < lowMark() ? 'warn' : ''}">${fm(b)}</span></div>`;
+    else if (L.points.length) eod = `<div class="eod"><span class="muted">Before your first bank balance (${fdS(L.points[0].date)})</span><span></span></div>`;
+    else eod = '<div class="eod"><span class="muted">Set your bank balance to see balances</span><span></span></div>';
+    let note = '';
+    if (b != null && b < 0 && d >= T) { const w = payWindow(L, d); note = addBackNote(L, Math.max(T, w.start), w.end, w.next != null); }
+    return `<div class="eyebrow">${tag}</div><h3>${fdL(d)}</h3>${eod}${note}` +
+      (rows ? `<div class="reg">${rows}</div>` : '<p class="note">Nothing scheduled on this day.</p>') +
+      `<div class="panel-acts"><button class="btn primary" data-act="set-bal" data-d="${d}">Set balance</button><button class="btn" data-act="add-item" data-d="${d}">${svg('plus')}Schedule</button><button class="btn" data-act="add-txn" data-d="${d}">Log spending</button></div>`;
+  }
+
+  function pointRow(pt) {
+    const p = pt.point, meta = ['<span class="pill bk">Bank balance</span>'];
+    if (pt.diff != null) meta.push(Math.abs(pt.diff) < 0.005 ? '<span>Matched what the app expected</span>' : `<span>${fm(Math.abs(pt.diff))} ${pt.diff > 0 ? 'more' : 'less'} than expected</span>`);
+    else meta.push('<span>First balance you entered</span>');
+    if (p.pending.size) meta.push(`<span>${p.pending.size} scheduled ${p.pending.size === 1 ? 'item' : 'items'} still to come that day</span>`);
+    return `<button class="entry" data-act="balance" data-d="${p.date}"><span class="bar bk"></span><span style="min-width:0"><span class="nm" style="display:block">${p.example ? 'Bank balance (example)' : 'Bank balance'}</span><span class="mt">${meta.join('')}</span></span><span class="am">${fm(p.balance)}</span></button>`;
+  }
+
+  function moveRow(mv, L, showDate) {
+    const meta = [];
+    if (showDate) meta.push(`<span>${fdW(mv.date)}</span>`);
+    let name, amt = null;
+    if (mv.target != null) {
+      meta.push(`<span class="pill sv">Sets balance to ${fm(mv.target)}</span>`);
+      if (mv.applied) { amt = mv.delta; name = amt > 0.004 ? 'Add from savings' : amt < -0.004 ? 'Move to savings' : 'Set balance'; if (Math.abs(amt) < 0.005) meta.push('<span>Nothing to move</span>'); }
+      else name = 'Set balance';
+    } else {
+      amt = mv.amount; name = amt >= 0 ? 'Add from savings' : 'Move to savings';
+      meta.push(`<span class="pill sv">Planned ${amt >= 0 ? 'from' : 'to'} savings</span>`);
+    }
+    if (!mv.applied) meta.push(`<span>${L.points.length && mv.date < L.points[0].date ? 'Before your first bank balance, not counted' : 'Your bank balance that day already includes it'}</span>`);
+    return `<button class="entry${mv.applied ? '' : ' dim'}" data-act="move" data-d="${mv.date}"><span class="bar sv"></span><span style="min-width:0"><span class="nm" style="display:block">${name}</span><span class="mt">${meta.join('')}</span></span><span class="am${amt > 0.004 ? ' in' : ''}">${amt == null ? '—' : fmS(amt)}</span></button>`;
   }
 
   function occRow(o, L, viewDay, showDate) {
@@ -1451,11 +1664,10 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
       }
     } else {
       amt = o.sign * (o.status === 'paid' ? Math.abs(o.actual) : o.planned);
-      const word = k === 'income' ? 'received' : 'paid';
       if (o.status === 'paid' && o.txn) meta.push(`<span class="pill in">${k === 'income' ? 'Received' : 'Paid'} ${fdS(P.dn(o.txn.date))}</span>`);
-      else if (o.status === 'due') meta.push(`<span class="pill warn">Not marked ${word}</span>`);
+      else if (o.status === 'due') meta.push('<span>Expected</span>');
       else if (o.status === 'past') meta.push('<span>Before balance date</span>');
-      if (o.status === 'past' || o.status === 'paid') cls = 'dim';
+      if (o.status === 'past' || o.status === 'paid' || o.status === 'due') cls = 'dim';
     }
     if (o.status === 'skipped') { cls = 'skip'; meta.push('<span class="pill">Skipped</span>'); }
     if (o.moved) meta.push(`<span class="pill acc">Moved from ${fdS(P.adjust(o.raw, P.normRule(it.rule).weekend))}</span>`);
@@ -1504,19 +1716,19 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     const tag = opt.cur ? '<span class="pill acc">Now</span>' : opt.pre ? '<span class="pill acc">Now</span>' : p.end < T ? '<span class="pill">Done</span>' : '';
     const sec = (label, list, total, sign) => list.length ? `<div class="p-sec"><div class="ttl"><span>${label}</span><span class="num">${fmS(sign * total)}</span></div>${list.map(o => occRow(o, L, o.date, true)).join('')}</div>` : '';
     let body = sec('Coming in', p.inc, p.income, 1) + sec('Bills', p.bills, p.billTotal, -1) + sec('Spending budgets', p.spend, p.spendTotal, -1);
+    if (p.moves.length) body += `<div class="p-sec"><div class="ttl"><span>Savings moves</span><span class="num">${fmS(p.moves.reduce((a, m) => a + (m.applied ? m.delta : 0), 0))}</span></div>${p.moves.map(m => moveRow(m, L, true)).join('')}</div>`;
     if (p.other.length) body += `<div class="p-sec"><div class="ttl"><span>Other logged</span><span class="num">${fmS(p.otherIn - p.otherOut)}</span></div><p class="note" style="padding:6px 0 0">${p.other.length} uncategorized ${p.other.length === 1 ? 'transaction' : 'transactions'}. They already count in the balances below.</p></div>`;
     if (!body) body = '<p class="note">Nothing scheduled in this period.</p>';
     let total;
+    const addBack = p.end >= T ? addBackNote(L, Math.max(T, p.start), p.end, p.next != null) : '';
     if (opt.pre) total = `<div class="p-total"><span class="lbl">Due before payday</span><span class="v">${fm(p.billTotal + p.spendTotal)}</span></div>`;
     else {
       const lbl = p.left > 0.004 ? 'Left to budget' : p.left < -0.004 ? 'Over budget' : 'Every dollar has a job';
       total = `<div class="p-total"><span class="lbl">${lbl}</span><span class="v ${p.left < -0.004 ? 'out' : p.left > 0.004 ? 'in' : ''}">${fm(Math.abs(p.left))}</span></div>`;
-      if (p.left < -0.004 && p.low) {
-        total += p.low.bal >= 0
-          ? `<p class="p-why">This paycheck alone does not cover it, but money already in the account does. Your balance stays at or above ${fm(p.low.bal)}.</p>`
-          : `<p class="p-why">Your balance would drop below $0 on ${fdS(p.low.date)}. Move a bill to another paycheck or trim a spending budget.</p>`;
-      } else if (p.left > 0.004) total += '<p class="p-why">Give these dollars a job: add savings, extra debt payments or giving to this paycheck.</p>';
+      if (p.left < -0.004 && p.low && p.low.bal >= 0) total += `<p class="p-why">This paycheck alone does not cover it, but money already in the account does. Your balance stays at or above ${fm(p.low.bal)}.</p>`;
+      else if (p.left > 0.004 && !addBack) total += '<p class="p-why">Give these dollars a job: add savings, extra debt payments or giving to this paycheck.</p>';
     }
+    total += addBack;
     const bc = v => (v == null ? '' : v < 0 ? 'neg' : v < lowMark() ? 'low' : '');
     const bv = v => (v == null ? '—' : fm(v));
     const startNow = p.balStart == null && p.start <= L.A.date && p.end >= L.A.date;
@@ -1593,8 +1805,9 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
       <section class="card set-card"><h2>Sync</h2>${sync}</section>
       ${install}
       <section class="card set-card"><h2>Bank balance</h2>
-        <p>${A.set ? `${fm(A.balance)} as of ${fdY(A.date)}.` : 'Not set yet.'} The calendar figures every future day forward from this number. Update it whenever you check your bank so the projection stays exact.</p>
-        <div class="row"><button class="btn primary" data-act="balance">Update balance</button></div></section>
+        <p>${A.set ? `Latest: ${fm(A.balance)} on ${fdY(A.date)}.` : 'Not set yet.'} Each day counts forward from the bank balance before it. To set the balance on another day, tap that day on the calendar, then Set balance.</p>
+        ${L.points.length ? `<div class="hist">${L.points.slice(-6).reverse().map(p => { const pi = L.pointAt(p.date); const dt = pi.diff == null ? 'First balance' : Math.abs(pi.diff) < 0.005 ? 'As expected' : `${fm(Math.abs(pi.diff))} ${pi.diff > 0 ? 'more' : 'less'} than expected`; return `<button class="hrow" data-act="goto" data-d="${p.date}"><span>${fdY(p.date)}</span><span class="num">${fm(p.balance)}</span><span class="muted">${dt}</span></button>`; }).join('')}</div>` : ''}
+        <div class="row"><button class="btn primary" data-act="balance">Update today's balance</button></div></section>
       <section class="card set-card"><h2>Calendar</h2>
         <div class="two"><div class="fld"><label for="set-low">Warn me when a day drops below</label><input class="inp money" id="set-low" inputmode="decimal" value="${lowMark().toFixed(2)}"></div>
         <div class="fld"><label for="set-ws">Weeks start on</label><select class="inp" id="set-ws"><option value="0"${weekStart() === 0 ? ' selected' : ''}>Sunday</option><option value="1"${weekStart() === 1 ? ' selected' : ''}>Monday</option></select></div></div></section>
@@ -1969,35 +2182,125 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
   }
 
   // ----- balance -----
-  function openBalance() {
-    const L = ledger(), T = L.today, A = L.A;
-    const html = `<form class="form" id="f-bal" novalidate>
-      <p class="muted" style="margin:0;font-size:var(--t-sm)">Open your bank app and enter what is in checking right now. Every future day on the calendar is figured forward from this number. Use a minus sign if the account is overdrawn.</p>
-      <div class="two"><div class="fld"><label for="b-amt">Balance</label><input class="inp money" id="b-amt" inputmode="decimal" autocomplete="off" value="${A.set ? A.balance.toFixed(2) : ''}" placeholder="0.00"></div>
-        <div class="fld"><label for="b-date">As of</label><input class="inp" type="date" id="b-date" value="${P.ds(T)}"></div></div>
-      <div id="b-today"></div>
-      <p class="err" id="b-err" hidden></p>
-      <div class="sheet-acts"><button type="button" class="btn push" data-act="close">Cancel</button><button type="submit" class="btn primary">Save balance</button></div>
+  // ----- Set balance: what the bank shows (today or earlier), or a planned savings move (today or later) -----
+  function openSetBalance(d, mode) {
+    const L = ledger(), T = L.today;
+    if (d == null || !isFinite(d)) d = T;
+    const dstr = P.ds(d);
+    const pt = L.pointAt(d), mv0 = L.moveAt(d);
+    const canBank = d <= T, canMove = d >= T, both = canBank && canMove;
+    if (!mode) mode = canBank && !(d === T && mv0 && !pt) ? 'bank' : 'move';
+    if (mode === 'bank' && !canBank) mode = 'move';
+    if (mode === 'move' && !canMove) mode = 'bank';
+    const os = L.occs.filter(o => o.date === d && o.item.kind !== 'spend' && !o.skip && !o.txn);
+    const pend = pt ? pt.point.pending : new Set();
+    const expected = L.expectedAt(d);
+    const eodNow = L.balAt(d);
+    const base = eodNow == null ? null : P.round2(eodNow - (mv0 && mv0.applied ? mv0.delta : 0));
+    const mvKind = mv0 && mv0.target == null ? 'amount' : 'target';
+    const mvDir = mv0 && mv0.amount != null && mv0.amount > 0 ? 'from' : 'to';
+    const bankIntro = d === T ? 'Open your bank app and enter what is in checking right now.' : 'Enter what checking had at the end of this day, from your bank\'s history or statement.';
+    const pendHint = d === T ? 'Leave checked if it has already hit your account. Uncheck anything still pending so it counts later today.' : 'Leave checked if it had cleared by the end of the day.';
+    const html = `<form class="form" id="f-sb" novalidate>
+      ${both ? `<div class="segm" role="radiogroup" aria-label="What to set"><input type="radio" name="sbm" id="sbm-bank" value="bank"${mode === 'bank' ? ' checked' : ''}><label for="sbm-bank">What my bank shows</label><input type="radio" name="sbm" id="sbm-move" value="move"${mode === 'move' ? ' checked' : ''}><label for="sbm-move">Plan a savings move</label></div>` : ''}
+      <div id="sb-bank" class="form">
+        <p class="muted" style="margin:0;font-size:var(--t-sm)">${bankIntro} Use a minus sign if the account was overdrawn.</p>
+        <div class="fld"><label for="sb-amt">Checking balance</label><input class="inp money" id="sb-amt" inputmode="decimal" autocomplete="off" value="${pt ? pt.point.balance.toFixed(2) : ''}" placeholder="0.00"></div>
+        ${os.length ? `<div class="box"><h3>Scheduled for this day</h3><p class="hint muted" style="margin:0;font-size:var(--t-xs)">${pendHint}</p>${os.map(o => `<label class="check"><input type="checkbox" class="sb-occ" value="${esc(o.key)}"${pend.has(o.key) ? '' : ' checked'}><span>${esc(o.item.name)} <b class="num">${fmS(o.sign * o.planned)}</b></span></label>`).join('')}</div>` : ''}
+        <div class="preview" id="sb-res"></div>
+      </div>
+      <div id="sb-move" class="form">
+        <div class="segm" role="radiogroup" aria-label="Kind of move"><input type="radio" name="sbk" id="sbk-t" value="target"${mvKind === 'target' ? ' checked' : ''}><label for="sbk-t">Set balance to</label><input type="radio" name="sbk" id="sbk-a" value="amount"${mvKind === 'amount' ? ' checked' : ''}><label for="sbk-a">Move an amount</label></div>
+        <div class="fld" id="w-tgt"><label for="sb-tgt">End this day with</label><input class="inp money" id="sb-tgt" inputmode="decimal" autocomplete="off" value="${mv0 && mv0.target != null ? mv0.target.toFixed(2) : '0.00'}"><span class="hint muted" style="font-size:var(--t-xs)">The amount to move updates on its own if your schedule changes.</span></div>
+        <div class="form" id="w-mamt">
+          <div class="segm" role="radiogroup" aria-label="Direction"><input type="radio" name="sbd" id="sbd-to" value="to"${mvDir === 'to' ? ' checked' : ''}><label for="sbd-to">To savings</label><input type="radio" name="sbd" id="sbd-from" value="from"${mvDir === 'from' ? ' checked' : ''}><label for="sbd-from">From savings</label></div>
+          <div class="fld"><label for="sb-mamt">Amount</label><input class="inp money" id="sb-mamt" inputmode="decimal" autocomplete="off" value="${mv0 && mv0.amount != null ? Math.abs(mv0.amount).toFixed(2) : ''}" placeholder="0.00"></div>
+        </div>
+        <div class="preview" id="sb-mres"></div>
+      </div>
+      <p class="err" id="sb-err" hidden></p>
+      <div class="sheet-acts" id="sb-acts"><button type="button" class="btn danger" id="sb-del">Remove</button><button type="button" class="btn push" data-act="close">Cancel</button><button type="submit" class="btn primary">Save</button></div>
     </form>`;
-    openSheet('Bank balance', html, () => {
-      function refresh() {
-        const d = P.dn($('#b-date').value), box = $('#b-today');
-        if (!isFinite(d)) { box.innerHTML = ''; return; }
-        const os = ledger().occs.filter(o => o.date === d && o.item.kind !== 'spend' && !o.skip && !o.txn);
-        box.innerHTML = os.length ? `<div class="box"><h3>Scheduled for ${fdS(d)}</h3><p class="hint muted" style="margin:0;font-size:var(--t-xs)">Leave checked if it has already hit your account. Uncheck anything still pending so it is counted later today.</p>${os.map(o => `<label class="check"><input type="checkbox" class="b-occ" value="${esc(o.key)}" checked><span>${esc(o.item.name)} <b class="num">${fmS(o.sign * o.planned)}</b></span></label>`).join('')}</div>` : '';
+    const title = both ? 'Set balance · ' + (d === T ? 'Today' : fdS(d)) : mode === 'bank' ? 'Bank balance · ' + fdS(d) : 'Savings move · ' + fdS(d);
+    openSheet(title, html, () => {
+      const f = $('#f-sb');
+      const curMode = () => (both ? f.querySelector('input[name=sbm]:checked').value : mode);
+      const kind = () => f.querySelector('input[name=sbk]:checked').value;
+      const dir = () => f.querySelector('input[name=sbd]:checked').value;
+      function bankRes() {
+        const box = $('#sb-res'), v = P.parseAmount($('#sb-amt').value);
+        const later = mv0 && mv0.applied && d >= L.A.date ? `<div class="muted">The savings move planned for this day stops counting, because this balance already includes it.</div>` : '';
+        if (!isFinite(v)) { box.innerHTML = expected != null ? `The app expects <b>${fm(expected)}</b> at the end of this day.` : 'Days from here on will count forward from this balance.'; return; }
+        const pendSum = os.filter(o => { const c = f.querySelector(`.sb-occ[value="${CSS.escape(o.key)}"]`); return c && !c.checked; }).reduce((a, o) => a + o.sign * o.planned, 0);
+        const eod = P.round2(v + pendSum);
+        let cmp;
+        if (expected == null) cmp = '<div class="muted">This is your first bank balance. Days from here on count forward from it.</div>';
+        else { const diff = P.round2(eod - expected); cmp = Math.abs(diff) < 0.005 ? `<div>That matches what the app expected.</div>` : `<div>The app expected ${fm(expected)}, so this is <b class="${diff < 0 ? 'out' : 'in'}">${fm(Math.abs(diff))} ${diff < 0 ? 'less' : 'more'}</b>.</div>`; }
+        box.innerHTML = `<b>End of day: ${fm(eod)}</b>${cmp}${later}`;
       }
-      $('#b-date').addEventListener('change', refresh);
-      refresh();
-      $('#f-bal').addEventListener('submit', e => {
+      function moveRes() {
+        const box = $('#sb-mres');
+        if (base == null) { box.innerHTML = 'Set a bank balance on or before this day first, so the app knows what to move.'; return; }
+        const without = `<div class="muted">Without a move, this day ends at ${fm(base)}.</div>`;
+        if (kind() === 'target') {
+          const x = P.parseAmount($('#sb-tgt').value);
+          if (!isFinite(x)) { box.innerHTML = without; return; }
+          const delta = P.round2(x - base);
+          box.innerHTML = (delta < -0.004 ? `<b>Move ${fm(-delta)} to savings</b>` : delta > 0.004 ? `<b>Add ${fm(delta)} from savings</b>` : '<b>Nothing to move</b>') + without;
+        } else {
+          const a = Math.abs(P.parseAmount($('#sb-mamt').value));
+          if (!(a > 0)) { box.innerHTML = without; return; }
+          box.innerHTML = `<b>End of day: ${fm(P.round2(base + (dir() === 'to' ? -a : a)))}</b>` + without;
+        }
+      }
+      function sync() {
+        const m = curMode();
+        $('#sb-bank').hidden = m !== 'bank'; $('#sb-move').hidden = m !== 'move';
+        $('#w-tgt').hidden = kind() !== 'target'; $('#w-mamt').hidden = kind() !== 'amount';
+        $('#sb-del').hidden = !(m === 'bank' ? pt : mv0);
+        showErr('#sb-err', '');
+        if (m === 'bank') bankRes(); else moveRes();
+      }
+      f.addEventListener('input', sync); f.addEventListener('change', sync);
+      sync();
+      $('#sb-del').addEventListener('click', () => {
+        const m = curMode();
+        const msg = m === 'bank' ? 'Remove this bank balance? Days after it will count from the balance before it.' : 'Remove this planned savings move?';
+        $('#sb-acts').innerHTML = `<span style="font-size:var(--t-sm)">${msg}</span><button type="button" class="btn push" id="sb-keep">Keep it</button><button type="button" class="btn danger" id="sb-yes">Remove</button>`;
+        $('#sb-keep').addEventListener('click', () => { closeSheet(); openSetBalance(d, m); });
+        $('#sb-yes').addEventListener('click', () => {
+          if (m === 'bank') setPoint(dstr, null); else setMove(dstr, null);
+          closeSheet(); toast(m === 'bank' ? 'Bank balance removed.' : 'Savings move removed.');
+        });
+      });
+      f.addEventListener('submit', e => {
         e.preventDefault();
-        const v = P.parseAmount($('#b-amt').value), d = $('#b-date').value;
-        if (!isFinite(v)) { showErr('#b-err', 'Enter your balance, like 1240.50.'); return; }
-        if (!d) { showErr('#b-err', 'Pick a date.'); return; }
-        const pending = $$('.b-occ').filter(c => !c.checked).map(c => c.value);
-        saveSettings({ anchor: { date: d, balance: P.round2(v), setAt: Date.now(), pending, example: false } });
-        closeSheet(); toast('Balance updated.');
+        if (curMode() === 'bank') {
+          const v = P.parseAmount($('#sb-amt').value);
+          if (!isFinite(v)) { showErr('#sb-err', 'Enter your balance, like 1240.50.'); return; }
+          const pending = $$('.sb-occ').filter(c => !c.checked).map(c => c.value);
+          setPoint(dstr, { balance: P.round2(v), setAt: Date.now(), pending, example: false });
+          closeSheet(); toast(d === T ? 'Balance updated.' : `Bank balance saved for ${fdS(d)}.`);
+        } else if (kind() === 'target') {
+          const x = P.parseAmount($('#sb-tgt').value);
+          if (!isFinite(x)) { showErr('#sb-err', 'Enter the balance to end the day with, like 0.00.'); return; }
+          setMove(dstr, { target: P.round2(x), amount: null, setAt: Date.now() });
+          closeSheet(); toast(`Balance set to ${fm(x)} on ${fdS(d)}.`);
+        } else {
+          const a = Math.abs(P.parseAmount($('#sb-mamt').value));
+          if (!(a > 0)) { showErr('#sb-err', 'Enter an amount, like 200.00.'); return; }
+          setMove(dstr, { target: null, amount: P.round2(dir() === 'to' ? -a : a), setAt: Date.now() });
+          closeSheet(); toast(`Planned ${fm(a)} ${dir() === 'to' ? 'to' : 'from'} savings on ${fdS(d)}.`);
+        }
       });
     });
+  }
+  function planAdd(d, amt) {
+    if (!(amt > 0) || !isFinite(d)) return;
+    const cur = P.movesOf(S).get(d);
+    if (cur && cur.target != null) { openSetBalance(d, 'move'); return; }
+    setMove(P.ds(d), { target: null, amount: P.round2((cur ? cur.amount : 0) + amt), setAt: Date.now() });
+    toast(`Planned ${fm(amt)} from savings on ${fdS(d)}.`);
   }
 
   // ----- CSV import -----
@@ -2352,12 +2655,12 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
       mk('Eating out', 'spend', 60, { type: 'weeks', every: 2, start: P.ds(fri) })
     ];
     for (const it of list) saveItem(it);
-    if (!ledger().A.set) saveSettings({ anchor: { date: P.ds(T), balance: 1640, setAt: Date.now(), pending: [], example: true } });
+    if (!ledger().A.set) setPoint(P.ds(T), { balance: 1640, setAt: Date.now(), pending: [], example: true });
     toast('Example budget loaded.');
   }
   function removeExamples() {
     for (const it of items()) if (it.example) deleteItem(it.id);
-    if (S.settings.anchor && S.settings.anchor.example) saveSettings({ anchor: null });
+    for (const p of P.balancePoints(S)) if (p.example) setPoint(P.ds(p.date), null);
     toast('Examples removed.');
   }
 
@@ -2379,7 +2682,7 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
     const a = b.dataset.act;
     const d = b.dataset.d != null && b.dataset.d !== '' ? +b.dataset.d : null;
     const inSheet = !!b.closest('#sheet');
-    const WRITES = ['balance', 'add-pay', 'add-item', 'edit-item', 'occ', 'txn', 'add-txn', 'import', 'examples', 'rm-examples', 'restore', 'erase', 'del-rule'];
+    const WRITES = ['balance', 'set-bal', 'move', 'plan-add', 'add-pay', 'add-item', 'edit-item', 'occ', 'txn', 'add-txn', 'import', 'examples', 'rm-examples', 'restore', 'erase', 'del-rule'];
     if (MODE === 'cache' && WRITES.includes(a)) { toast('You are offline. Reconnect to make changes.'); return; }
     switch (a) {
       case 'tab': setTab(b.dataset.tab); break;
@@ -2408,7 +2711,10 @@ pre.code { margin: 0; background: var(--raise); border: 1px solid var(--line); b
         if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
         UI.actYM = { y, m }; render(); break;
       }
-      case 'balance': openBalance(); break;
+      case 'balance': openSetBalance(d != null ? d : P.todayN(), 'bank'); break;
+      case 'set-bal': openSetBalance(d); break;
+      case 'move': openSetBalance(d, 'move'); break;
+      case 'plan-add': planAdd(d, +b.dataset.amt); break;
       case 'add-pay': openItem(null, { kind: 'income', paycheck: true, name: 'Paycheck', freq: 'w2' }); break;
       case 'add-item': openItem(null, { kind: b.dataset.kind || 'bill', start: d }); break;
       case 'edit-item': if (S.items[b.dataset.id]) openItem(S.items[b.dataset.id]); break;
